@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="SEASR-Commons" default="dist" basedir=".">
+
+    <!--
+    =================================
+    ENVIRONMENT CHECKS
+    ====================================
+    -->
+
+    <!-- Check whether Java 1.5+ is being used -->
+    <condition property="using.java.1.5">
+        <or>
+            <equals arg1="${ant.java.version}" arg2="1.5"/>
+            <equals arg1="${ant.java.version}" arg2="1.6"/>
+        </or>
+    </condition>
+
+    <!-- Make sure we're running under the correct environment -->
+    <fail message="This package requires at least Java 5. Please set JAVA_HOME to point to where JDK 1.5 or higher is installed."
+          unless="using.java.1.5"/>
+
+    <!--
+    =================================
+    DIRECTORY STRUCTURE DEFINITION
+    ====================================
+    -->
+
+    <!-- Project structure -->
+    <property name="src.dir" value="${basedir}/src"/>
+    <property name="lib.dir" value="${basedir}/lib"/>
+    <property name="build.dir" value="${basedir}/build"/>
+    <property name="classes.dir" value="${build.dir}/classes"/>
+    <property name="dist.dir" value="${basedir}/dist"/>
+
+
+    <!-- Project configuration -->
+    <property name="dist.jar.name" value="seasr-commons.jar"/>
+
+    <!--
+    =================
+    CLASSPATHS
+    =================
+    -->
+
+    <!-- Compilation classpath -->
+    <path id="classpath.build">
+        <fileset dir="${lib.dir}" includes="*.jar"/>
+    </path>
+
+    <!--
+    =================
+    BUILD TARGETS
+    =================
+    -->
+
+    <!--
+        Creates required folders
+    -->
+    <target name="init" description="-> creates required folders">
+        <tstamp/>
+        <mkdir dir="${build.dir}"/>
+        <mkdir dir="${classes.dir}"/>
+        <mkdir dir="${dist.dir}"/>
+    </target>
+
+    <!--
+        Performs cleanup
+    -->
+    <target name="clean" description="-> removes build artifacts">
+        <delete dir="${build.dir}"/>
+        <delete dir="${dist.dir}"/>
+    </target>
+
+    <!--
+        Compiles components code
+    -->
+    <target name="compile"
+        depends="init"
+        description="-> compiles all components">
+        <!-- compile -->
+        <javac source="1.5"
+               debug="on"
+               debuglevel="lines,vars,source"
+               srcdir="${src.dir}"
+               destdir="${classes.dir}">
+            <classpath refid="classpath.build"/>
+            <compilerarg value="-Xlint:unchecked"/> 
+        </javac>
+    </target>
+
+    <!--
+        Creates distribution JAR file
+    -->
+    <target name="dist"
+            depends="compile"
+            description="-> creates distribution jar file">
+        <tstamp>
+            <format property="NOW" pattern="MM/dd/yyyy hh:mmaa"/>
+        </tstamp>
+
+        <jar destfile="${dist.dir}/${dist.jar.name}">
+            <fileset dir="${classes.dir}"/>
+            <fileset dir="${src.dir}"/>
+            <manifest>
+                <attribute name="Date-Built" value="${NOW}"/>
+            </manifest>
+        </jar>
+    </target>
+
+</project>
+
+<!-- DO NOT EDIT BELOW THIS LINE PLEASE -->
+<!-- vim:sw=4:softtabstop=4:expandtab
+-->
