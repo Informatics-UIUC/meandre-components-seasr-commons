@@ -44,12 +44,11 @@ public class SnowballStemmingService
 	
 	public String getStem(String fromThisWord) 
 	{
-		String lower = fromThisWord.toLowerCase();
-		
-		if (! StringUtilities.isAllLetters(lower)) {
+		if (! StringUtilities.isAllLetters(fromThisWord)) {
 			return fromThisWord;
 		}
 		
+		String lower = fromThisWord.toLowerCase();
 		stemmer.setCurrent(lower);
         stemmer.stem();
         return stemmer.getCurrent();

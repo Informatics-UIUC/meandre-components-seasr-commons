@@ -16,12 +16,11 @@ public class PorterStemmingService {
 	
 	public String getStem(String fromThisWord) 
 	{
-		String lower = fromThisWord.toLowerCase();
-	
-		if (! StringUtilities.isAllLetters(lower)) {
+		if (! StringUtilities.isAllLetters(fromThisWord)) {
 			return fromThisWord;
 		}
 		
+		String lower = fromThisWord.toLowerCase();
 		char[] ch = lower.toCharArray();
 		// all is golden
 		for (char c : ch) {
