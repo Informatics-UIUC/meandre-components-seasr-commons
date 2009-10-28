@@ -35,9 +35,14 @@ public class PorterStemmingService {
 
 }
 
+
+
 //
 // What follows is a direct import of the Porter algorithm
+// see http://tartarus.org/~martin/PorterStemmer/java.txt
 //
+
+
 
 /*
 
