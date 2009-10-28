@@ -9,7 +9,7 @@ public class PorterStemmingService {
 	
 	Stemmer stemmer;
 	
-	PorterStemmingService()
+	public PorterStemmingService()
 	{
 		 this.stemmer = new Stemmer();
 	}
