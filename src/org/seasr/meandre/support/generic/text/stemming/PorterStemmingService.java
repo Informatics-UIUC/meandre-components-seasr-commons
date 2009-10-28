@@ -14,17 +14,15 @@ public class PorterStemmingService {
 		 this.stemmer = new Stemmer();
 	}
 	
-	public String stem(String fromThisWord) 
+	public String getStem(String fromThisWord) 
 	{
 		String lower = fromThisWord.toLowerCase();
-		
-		char[] ch = lower.toCharArray();
-		for (char c : ch) {
-			if (!Character.isLetter(c)) {
-				return fromThisWord;
-			}
+	
+		if (! StringUtilities.isAllLetters(lower)) {
+			return fromThisWord;
 		}
 		
+		char[] ch = lower.toCharArray();
 		// all is golden
 		for (char c : ch) {
 			stemmer.add(c);
@@ -32,6 +30,8 @@ public class PorterStemmingService {
 		stemmer.stem();
 		return stemmer.toString();
 	}
+	
+	
 
 }
 
