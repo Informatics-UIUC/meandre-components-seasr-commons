@@ -91,7 +91,7 @@ public class VelocityTemplateService {
 	}
 
 
-	public static VelocityTemplateService getInstance()
+	public static synchronized VelocityTemplateService getInstance()
 	{
 		if (instance == null) {
 
