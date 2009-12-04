@@ -48,7 +48,6 @@ import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.Properties;
 import java.util.Map.Entry;
@@ -63,27 +62,35 @@ public abstract class HttpUtils {
      * Performs a GET request on a URL and returns the response
      *
      * @param sUrl The URL
+     * @param acceptHeader The desired HTTP Accept header, or null
      * @return The response
      * @throws MalformedURLException
      * @throws IOException
      */
-    public static String doGET(String sUrl) throws MalformedURLException, IOException {
+    public static String doGET(String sUrl, String acceptHeader) throws MalformedURLException, IOException {
         URL url = new URL(sUrl);
-        return IOUtils.getTextFromReader(new InputStreamReader(url.openStream()));
+
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        if (acceptHeader != null) connection.setRequestProperty("accept", acceptHeader);
+
+        return IOUtils.getTextFromReader(new InputStreamReader(connection.getInputStream()));
     }
 
     /**
      * Performs a POST request on a URL and returns the response
      *
      * @param sUrl The URL
+     * @param acceptHeader The desired HTTP Accept header, or null
      * @param props The payload of the POST request
      * @return The response
      * @throws MalformedURLException
      * @throws IOException
      */
-    public static String doPOST(String sUrl, Properties props) throws MalformedURLException, IOException {
+    public static String doPOST(String sUrl, String acceptHeader, Properties props) throws MalformedURLException, IOException {
         URL url = new URL(sUrl);
-        URLConnection connection = url.openConnection();
+
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        if (acceptHeader != null) connection.setRequestProperty("accept", acceptHeader);
         connection.setDoOutput(true);
 
         StringBuffer sb = new StringBuffer();
@@ -108,14 +115,17 @@ public abstract class HttpUtils {
      * Performs a POST request on a URL and returns the response
      *
      * @param sUrl The URL
+     * @param acceptHeader The desired HTTP Accept header, or null
      * @param sData The payload
      * @return The response
      * @throws MalformedURLException
      * @throws IOException
      */
-    public static String doPOST(String sUrl, String sData) throws MalformedURLException, IOException {
+    public static String doPOST(String sUrl, String acceptHeader, String sData) throws MalformedURLException, IOException {
         URL url = new URL(sUrl);
-        URLConnection connection = url.openConnection();
+
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        if (acceptHeader != null) connection.setRequestProperty("accept", acceptHeader);
         connection.setDoOutput(true);
 
         // Send the data
@@ -131,14 +141,17 @@ public abstract class HttpUtils {
      * Performs a PUT request on a URL and returns the response
      *
      * @param sUrl The URL
+     * @param acceptHeader The desired HTTP Accept header, or null
      * @param sData The payload
      * @return The response
      * @throws MalformedURLException
      * @throws IOException
      */
-    public static String doPUT(String sUrl, String sData) throws MalformedURLException, IOException {
+    public static String doPUT(String sUrl, String acceptHeader, String sData) throws MalformedURLException, IOException {
         URL url = new URL(sUrl);
+
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        if (acceptHeader != null) connection.setRequestProperty("accept", acceptHeader);
         connection.setDoOutput(true);
         connection.setRequestMethod("PUT");
 
@@ -161,13 +174,17 @@ public abstract class HttpUtils {
      * Performs a DELETE request on a URL and returns the response
      *
      * @param sUrl The URL
+     * @param acceptHeader The desired HTTP Accept header, or null
      * @return The response
      * @throws MalformedURLException
      * @throws IOException
      */
-    public static String doDELETE(String sUrl) throws MalformedURLException, IOException {
+    public static String doDELETE(String sUrl, String acceptHeader) throws MalformedURLException, IOException {
         URL url = new URL(sUrl);
+
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        if (acceptHeader != null) connection.setRequestProperty("accept", acceptHeader);
+
         connection.setDoOutput(true);
         connection.setRequestMethod("DELETE");
         connection.connect();
