@@ -43,6 +43,7 @@
 package org.seasr.meandre.support.generic.jstor;
 
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.regex.Matcher;
@@ -53,6 +54,7 @@ import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.cookie.CookiePolicy;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
+import org.seasr.meandre.support.generic.io.IOUtils;
 
 /**
  *
@@ -94,7 +96,8 @@ public abstract class JSTORUtils {
         GetMethod getMethod = new GetMethod(jstorConnection.getURL().toString());
         try {
             client.executeMethod(getMethod);
-            response = getMethod.getResponseBodyAsString();
+            response = IOUtils.getTextFromReader(
+                    new InputStreamReader(getMethod.getResponseBodyAsStream()));
         }
         finally {
             getMethod.releaseConnection();
