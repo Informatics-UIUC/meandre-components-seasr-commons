@@ -52,6 +52,12 @@ import java.net.URLEncoder;
 import java.util.Properties;
 import java.util.Map.Entry;
 
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpStatus;
+import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.commons.httpclient.methods.multipart.MultipartRequestEntity;
+import org.apache.commons.httpclient.methods.multipart.Part;
+
 /**
  * @author Boris Capitanu
  */
@@ -135,6 +141,38 @@ public abstract class HttpUtils {
 
         // Get the response
         return IOUtils.getTextFromReader(new InputStreamReader(connection.getInputStream()));
+    }
+
+    /**
+     * Performs a multipart POST
+     *
+     * @param sUrl The request url
+     * @param acceptHeader The
+     * @param parts The parts
+     * @return The response
+     * @throws IOException
+     */
+    public static String doPOST(String sUrl, String acceptHeader, Part[] parts) throws IOException {
+        PostMethod postMethod = new PostMethod(sUrl);
+        try {
+            if (acceptHeader != null) postMethod.setRequestHeader("accept", acceptHeader);
+            postMethod.setRequestEntity(new MultipartRequestEntity(parts, postMethod.getParams()));
+            HttpClient httpClient = new HttpClient();
+            httpClient.getHttpConnectionManager().getParams().setConnectionTimeout(5000);
+
+            int statusCode = httpClient.executeMethod(postMethod);
+
+            switch (statusCode) {
+                case HttpStatus.SC_OK:
+                    return postMethod.getResponseBodyAsString();
+
+                default:
+                    throw new IOException(HttpStatus.getStatusText(statusCode));
+            }
+        }
+        finally {
+            postMethod.releaseConnection();
+        }
     }
 
     /**
