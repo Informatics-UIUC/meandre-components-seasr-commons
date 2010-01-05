@@ -162,13 +162,11 @@ public abstract class HttpUtils {
 
             int statusCode = httpClient.executeMethod(postMethod);
 
-            switch (statusCode) {
-                case HttpStatus.SC_OK:
-                    return postMethod.getResponseBodyAsString();
-
-                default:
-                    throw new IOException(HttpStatus.getStatusText(statusCode));
-            }
+            if (statusCode / 100 == 2)
+                // 2xx codes represent success
+                return postMethod.getResponseBodyAsString();
+            else
+                throw new IOException(HttpStatus.getStatusText(statusCode));
         }
         finally {
             postMethod.releaseConnection();
