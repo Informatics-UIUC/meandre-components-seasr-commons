@@ -48,6 +48,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 
 import com.hp.hpl.jena.rdf.model.Literal;
@@ -193,7 +194,12 @@ public abstract class ModelUtils {
    public static String modelToDialect(Model model, String dialect) {
        ByteArrayOutputStream baos = new ByteArrayOutputStream();
        model.write(baos, dialect);
-       return baos.toString();
+       try {
+        return baos.toString("UTF-8");
+    }
+    catch (UnsupportedEncodingException e) {
+        return null;
+    }
    }
 
    /**
@@ -223,6 +229,11 @@ public abstract class ModelUtils {
     * @return The InputStream for reading from the model
     */
    public static InputStream getInputStreamForModel(Model model, String dialect) {
-       return new ByteArrayInputStream(modelToDialect(model, dialect).getBytes());
+       try {
+        return new ByteArrayInputStream(modelToDialect(model, dialect).getBytes("UTF-8"));
+    }
+    catch (UnsupportedEncodingException e) {
+        return null;
+    }
    }
 }
