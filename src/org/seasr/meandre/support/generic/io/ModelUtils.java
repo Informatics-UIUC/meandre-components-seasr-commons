@@ -74,16 +74,14 @@ public abstract class ModelUtils {
      * @return The new model created (if no Model arguments were specified), or null if Model arguments were specified
      * @throws IOException Thrown if the content cannot be loaded into the model(s)
      */
-    public static Model getModel(String sModel, String baseURI, Model... modelArgs)
-        throws IOException {
-
+    public static Model getModel(String sModel, String baseURI, Model... modelArgs) throws IOException {
         Model[] models = (modelArgs.length == 0) ?
                 new Model[] { ModelFactory.createDefaultModel() } : modelArgs;
 
-        for (Model model : models)
-            readModelFromString(model, sModel, baseURI);
+                for (Model model : models)
+                    readModelFromString(model, sModel, baseURI);
 
-        return (modelArgs.length == 0) ? models[0] : null;
+                return (modelArgs.length == 0) ? models[0] : null;
     }
 
     /**
@@ -95,16 +93,14 @@ public abstract class ModelUtils {
      * @return The new model created (if no Model arguments were specified), or null if Model arguments were specified
      * @throws IOException Thrown if the content cannot be loaded into the model(s)
      */
-    public static Model getModel(InputStream modelStream, String baseURI, Model... modelArgs)
-        throws IOException {
-
+    public static Model getModel(InputStream modelStream, String baseURI, Model... modelArgs) throws IOException {
         Model[] models = (modelArgs.length == 0) ?
                 new Model[] { ModelFactory.createDefaultModel() } : modelArgs;
 
-        for (Model model : models)
-            readModelFromStream(model, modelStream, baseURI);
+                for (Model model : models)
+                    readModelFromStream(model, modelStream, baseURI);
 
-        return (modelArgs.length == 0) ? models[0] : null;
+                return (modelArgs.length == 0) ? models[0] : null;
     }
 
     /**
@@ -116,9 +112,7 @@ public abstract class ModelUtils {
      * @return The new model created (if no Model arguments were specified), or null if Model arguments were specified
      * @throws IOException Thrown if the content cannot be loaded into the model(s)
      */
-    public static Model getModel(byte[] modelBytes, String baseURI, Model... modelArgs)
-        throws IOException {
-
+    public static Model getModel(byte[] modelBytes, String baseURI, Model... modelArgs) throws IOException {
         return getModel(new ByteArrayInputStream(modelBytes), baseURI, modelArgs);
     }
 
@@ -143,9 +137,7 @@ public abstract class ModelUtils {
      * @param baseURI An optional single argument specifying the base URI
      * @throws IOException Thrown if the content cannot be loaded into the model
      */
-    public static void readModelFromString(Model model, String sModel, String... baseURI)
-        throws IOException {
-
+    public static void readModelFromString(Model model, String sModel, String... baseURI) throws IOException {
         if (baseURI.length > 1)
             throw new IllegalArgumentException("baseURI can only be specified once");
 
@@ -179,61 +171,67 @@ public abstract class ModelUtils {
      * @param baseURI An optional single argument specifying the base URI
      * @throws IOException Thrown if the content cannot be loaded into the model
      */
-    public static void readModelFromStream(Model model, InputStream modelStream, String... baseURI)
-        throws IOException {
-
+    public static void readModelFromStream(Model model, InputStream modelStream, String... baseURI) throws IOException {
         readModelFromString(model, IOUtils.getTextFromReader(new InputStreamReader(modelStream)), baseURI);
     }
 
-   /**
-    * Converts the model to a string.
-    *
-    * @param model The model to read
-    * @return The dialect version of the model
-    */
-   public static String modelToDialect(Model model, String dialect) {
-       ByteArrayOutputStream baos = new ByteArrayOutputStream();
-       model.write(baos, dialect);
-       try {
-        return baos.toString("UTF-8");
+    /**
+     * Converts the model to a string.
+     *
+     * @param model The model to read
+     * @param dialect The format
+     * @return The dialect version of the model
+     */
+    public static String modelToDialect(Model model, String dialect) {
+        try {
+            return new String(modelToByteArray(model, dialect), "UTF-8");
+        }
+        catch (UnsupportedEncodingException e) {
+            return null;
+        }
     }
-    catch (UnsupportedEncodingException e) {
-        return null;
+
+    /**
+     * Converts a model to a byte array
+     *
+     * @param model The model
+     * @param dialect The format
+     * @return The byte array
+     */
+    public static byte[] modelToByteArray(Model model, String dialect) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        model.write(baos, dialect);
+
+        return baos.toByteArray();
     }
-   }
 
-   /**
-    * Extract the text of a model.
-    *
-    * @param model The model to use
-    * @return The text contained in the model
-    */
-   public static String extractTextFromModel(Model model, Property textProperty) {
-       StringBuffer sbBuffer = new StringBuffer();
-       NodeIterator modelObjects = model.listObjectsOfProperty(textProperty);
+    /**
+     * Extract the text of a model.
+     *
+     * @param model The model to use
+     * @return The text contained in the model
+     */
+    public static String extractTextFromModel(Model model, Property textProperty) {
+        StringBuffer sbBuffer = new StringBuffer();
+        NodeIterator modelObjects = model.listObjectsOfProperty(textProperty);
 
-       while ( modelObjects.hasNext() ) {
-           Literal node = (Literal)modelObjects.nextNode();
-           sbBuffer.append(node.getValue().toString());
-           sbBuffer.append(" ");
-       }
+        while ( modelObjects.hasNext() ) {
+            Literal node = (Literal)modelObjects.nextNode();
+            sbBuffer.append(node.getValue().toString());
+            sbBuffer.append(" ");
+        }
 
-       return sbBuffer.toString();
-   }
-
-   /**
-    * Get an InputStream for a Model
-    *
-    * @param model The model
-    * @param dialect The dialect
-    * @return The InputStream for reading from the model
-    */
-   public static InputStream getInputStreamForModel(Model model, String dialect) {
-       try {
-        return new ByteArrayInputStream(modelToDialect(model, dialect).getBytes("UTF-8"));
+        return sbBuffer.toString();
     }
-    catch (UnsupportedEncodingException e) {
-        return null;
+
+    /**
+     * Get an InputStream for a Model
+     *
+     * @param model The model
+     * @param dialect The dialect
+     * @return The InputStream for reading from the model
+     */
+    public static InputStream getInputStreamForModel(Model model, String dialect) {
+        return new ByteArrayInputStream(modelToByteArray(model, dialect));
     }
-   }
 }
