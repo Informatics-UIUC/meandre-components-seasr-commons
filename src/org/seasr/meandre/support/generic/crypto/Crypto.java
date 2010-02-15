@@ -49,28 +49,20 @@ import java.security.NoSuchAlgorithmException;
 
 
 public abstract class Crypto {
-
-    private static final byte[] HEX_CHAR_TABLE = {
-        (byte)'0', (byte)'1', (byte)'2', (byte)'3',
-        (byte)'4', (byte)'5', (byte)'6', (byte)'7',
-        (byte)'8', (byte)'9', (byte)'a', (byte)'b',
-        (byte)'c', (byte)'d', (byte)'e', (byte)'f'
-    };
-
     /**
-     * Returns a HEX string for the specified byte array
+     * Returns a hex string for the specified byte array
      *
      * @param bytes The byte array
      * @return The HEX string in ASCII encoding, or null if a problem occurred
      */
-    public static String getHexString(byte[] bytes) {
+    public static String toHexString(byte[] bytes) {
         byte[] hex = new byte[2 * bytes.length];
         int index = 0;
 
         for (byte b : bytes) {
             int v = b & 0xFF;
-            hex[index++] = HEX_CHAR_TABLE[v >>> 4];
-            hex[index++] = HEX_CHAR_TABLE[v & 0xF];
+            hex[index++] = (byte)Character.forDigit(v >>> 4, 16);
+            hex[index++] = (byte)Character.forDigit(v & 0xF, 16);
         }
 
         try {
@@ -80,6 +72,23 @@ public abstract class Crypto {
             // Should never happen
             return null;
         }
+    }
+
+    /**
+     * Returns a byte array from a hex string encoded with toHexString(byte[] bytes)
+     *
+     * @param s The hex string
+     * @return The byte array
+     */
+    public static byte[] fromHexString(String s) {
+        int len = s.length();
+        byte[] bytes = new byte[len / 2];
+
+        for (int i = 0; i < len; i += 2)
+            bytes[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
+                                 + Character.digit(s.charAt(i+1), 16));
+
+        return bytes;
     }
 
     /**
