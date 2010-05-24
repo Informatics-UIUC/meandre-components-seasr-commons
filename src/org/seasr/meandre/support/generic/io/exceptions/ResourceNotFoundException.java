@@ -44,6 +44,11 @@ package org.seasr.meandre.support.generic.io.exceptions;
 
 import java.io.FileNotFoundException;
 
+/**
+ * Exception class used to indicate that a resource could not be found
+ *
+ * @author Boris Capitanu
+ */
 
 @SuppressWarnings("serial")
 public class ResourceNotFoundException extends FileNotFoundException {
