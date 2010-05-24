@@ -56,10 +56,14 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLDecoder;
 
+import org.seasr.meandre.support.generic.io.exceptions.ResourceNotFoundException;
+
 /**
  * @author Boris Capitanu
  */
 public abstract class StreamUtils {
+
+    public static int DEFAULT_BUFFER_SIZE = 65536;
 
     /**
      * Reads the content of an InputStream into a byte array
@@ -69,17 +73,11 @@ public abstract class StreamUtils {
      * @throws IOException Thrown if a problem occurred while reading from the stream
      */
     public static byte[] getBytesFromStream(InputStream dataStream) throws IOException {
-        BufferedInputStream bufStream = new BufferedInputStream(dataStream);
+        InputStream bufStream = (dataStream instanceof BufferedInputStream) ?
+                dataStream : new BufferedInputStream(dataStream);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-        byte[] buffer = new byte[4096];
-        int nRead;
-
-        do {
-            nRead = bufStream.read(buffer, 0, buffer.length);
-            if (nRead > 0)
-                baos.write(buffer, 0, nRead);
-        } while (nRead > 0);
+        copyStream(bufStream, baos, DEFAULT_BUFFER_SIZE);
 
         return baos.toByteArray();
     }
@@ -139,5 +137,37 @@ public abstract class StreamUtils {
                 throw new RuntimeException(e1);
             }
         }
+    }
+
+    /**
+     * Writes a resource resolvable through the specified class to an output stream
+     *
+     * @param clazz The class used to resolve the resource
+     * @param resourceName The resource name
+     * @param outputStream The output stream to write to
+     * @throws IOException
+     */
+    public static void writeClassResourceToStream(Class<?> clazz, String resourceName, OutputStream outputStream) throws IOException {
+        InputStream resStream = clazz.getResourceAsStream(resourceName);
+        if (resStream == null)
+            throw new ResourceNotFoundException(resourceName);
+
+        copyStream(resStream, outputStream, DEFAULT_BUFFER_SIZE);
+    }
+
+    /**
+     * Reads the data read from one stream and writes that data out to another stream
+     *
+     * @param inputStream The input stream
+     * @param outputStream The output stream
+     * @param bufferSize The buffer size to use
+     * @throws IOException
+     */
+    public static void copyStream(InputStream inputStream, OutputStream outputStream, int bufferSize) throws IOException {
+        int len;
+        byte[] buffer = new byte[bufferSize];
+
+        while ((len = inputStream.read(buffer)) != -1)
+            outputStream.write(buffer, 0, len);
     }
 }

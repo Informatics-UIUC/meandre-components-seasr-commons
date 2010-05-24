@@ -63,61 +63,6 @@ public class JARInstaller {
         SUCCESS, FAILED, SKIPPED
     }
 
-	/** Chunk size */
-	private static final int READ_WRITE_CHUNK_SIZE = 65536;
-
-	/** Install the contents of the jar at the given location. If location
-	 * exists no installation is performed, unless forced.
-	 *
-	 * @param sDestDir The location of the root directory where to install the stuff
-	 * @param sJarName The name of the jar to expand
-	 * @param bForce Force the installation by deleting the folder
-	 * @return True is the process finished correctly, false otherwise.
-	 */
-	public static synchronized InstallStatus installFromStream(InputStream jarStream, String sDestDir, boolean bForce ) {
-		File fRootDir = new File(sDestDir);
-		// Basic checking
-		if ( fRootDir.exists() ) {
-			if ( bForce ) {
-				boolean bOK = deleteDir(fRootDir);
-				if ( !bOK ) return InstallStatus.FAILED;
-			}
-			else {
-				return InstallStatus.SKIPPED;
-			}
-		}
-		else
-			fRootDir.mkdirs();
-
-		// Unjar the contents
-		try {
-			JarInputStream jar = new JarInputStream(jarStream);
-			JarEntry je = null;
-			while ( (je=jar.getNextJarEntry())!=null ) {
-			    String target = sDestDir+File.separator+je.getName();
-	            File fileTarget = new File(new File(target).toURI());
-				if ( je.isDirectory() ) {
-					fileTarget.mkdirs();
-				} else {
-					FileOutputStream fos = new FileOutputStream(fileTarget);
-	                byte [] baBuf = new byte[READ_WRITE_CHUNK_SIZE];
-	                int len;
-	                while ((len = jar.read(baBuf)) > 0) {
-	                    fos.write(baBuf, 0, len);
-	                }
-	                fos.close();
-	            }
-	        }
-		} catch (Throwable t) {
-		    t.printStackTrace();
-			deleteDir(new File(sDestDir));
-			return InstallStatus.FAILED;
-		}
-
-		return InstallStatus.SUCCESS;
-	}
-
-
 	/**  Deletes all files and subdirectories under dir.
 	 *   Returns true if all deletions were successful.
 	 *   If a deletion fails, the method stops attempting to delete and returns false.
@@ -141,5 +86,52 @@ public class JARInstaller {
             return dir.delete();
     	else
     		return true;
+    }
+
+    /** Install the contents of the jar at the given location. If location
+     * exists no installation is performed, unless forced.
+     *
+     * @param sDestDir The location of the root directory where to install the stuff
+     * @param sJarName The name of the jar to expand
+     * @param bForce Force the installation by deleting the folder
+     * @return True is the process finished correctly, false otherwise.
+     */
+    public static synchronized InstallStatus installFromStream(InputStream jarStream, String sDestDir, boolean bForce ) {
+    	File fRootDir = new File(sDestDir);
+    	// Basic checking
+    	if ( fRootDir.exists() ) {
+    		if ( bForce ) {
+    			boolean bOK = deleteDir(fRootDir);
+    			if ( !bOK ) return InstallStatus.FAILED;
+    		}
+    		else {
+    			return InstallStatus.SKIPPED;
+    		}
+    	}
+    	else
+    		fRootDir.mkdirs();
+
+    	// Unjar the contents
+    	try {
+    		JarInputStream jar = new JarInputStream(jarStream);
+    		JarEntry je = null;
+    		while ( (je=jar.getNextJarEntry())!=null ) {
+    		    String target = sDestDir+File.separator+je.getName();
+                File fileTarget = new File(new File(target).toURI());
+    			if ( je.isDirectory() ) {
+    				fileTarget.mkdirs();
+    			} else {
+    				FileOutputStream fos = new FileOutputStream(fileTarget);
+                    StreamUtils.copyStream(jar, fos, StreamUtils.DEFAULT_BUFFER_SIZE);
+                    fos.close();
+                }
+            }
+    	} catch (Throwable t) {
+    	    t.printStackTrace();
+    		deleteDir(new File(sDestDir));
+    		return InstallStatus.FAILED;
+    	}
+
+    	return InstallStatus.SUCCESS;
     }
 }
