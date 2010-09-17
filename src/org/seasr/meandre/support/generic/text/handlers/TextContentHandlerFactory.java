@@ -74,6 +74,10 @@ public class TextContentHandlerFactory implements ContentHandlerFactory {
         if (contentType.startsWith("application/pdf"))
             return new PDFTextContentHandler();
 
+        else
+            
+        if (contentType.startsWith("content/unknown"))
+            return new PlainTextContentHandler();
 
         return null;
     }
