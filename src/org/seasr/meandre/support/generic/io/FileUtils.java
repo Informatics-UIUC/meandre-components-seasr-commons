@@ -105,4 +105,21 @@ public abstract class FileUtils {
 
         fileList.addAll(Arrays.asList(files));
     }
+    
+    /**
+     * Deletes a file or directory recursively
+     * 
+     * @param path The path to delete
+     * @return True if successful, False otherwise
+     */
+    public static boolean deleteFileOrDirectory(File path) {
+        if (path.isDirectory()) {
+            File[] files = path.listFiles();
+            for (int i = 0; i < files.length; i++)
+                deleteFileOrDirectory(files[i]);
+        }
+        
+        return path.delete();
+    }
+
 }
