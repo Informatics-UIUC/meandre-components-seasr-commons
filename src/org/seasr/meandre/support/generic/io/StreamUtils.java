@@ -148,7 +148,7 @@ public abstract class StreamUtils {
      * @throws IOException
      */
     public static void writeClassResourceToStream(Class<?> clazz, String resourceName, OutputStream outputStream) throws IOException {
-        InputStream resStream = clazz.getResourceAsStream(resourceName);
+        InputStream resStream = clazz.getClassLoader().getResourceAsStream(resourceName);
         if (resStream == null)
             throw new ResourceNotFoundException(resourceName);
 
