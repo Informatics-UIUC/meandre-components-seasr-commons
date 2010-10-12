@@ -38,40 +38,66 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE SOFTWARE.
  */
 
-package org.seasr.meandre.support.generic.logging.formatter;
+package org.seasr.meandre.support.generic.util;
 
-import java.util.Date;
-import java.util.logging.Formatter;
-import java.util.logging.LogRecord;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 /**
- * A generic log formatter that includes useful information
+ * Provides network-related utilities
  * 
  * @author Boris Capitanu
  */
-public class GenericLogFormatter extends Formatter {
 
-    @Override
-    public String format(LogRecord record) {
-        String msg = record.getMessage();
-        if (msg == null || msg.length() == 0)
-            msg = null;
-
-        Throwable thrown = record.getThrown();
-        if (thrown != null) {
-            if (msg == null)
-                msg = thrown.toString();
-            else
-                msg += "  (" + thrown.toString() + ")";
+public abstract class NetUtils {
+    
+    /** 
+     * Returns the best guess for the host name
+     * 
+     * @return The host name
+     */
+    public static String getLocalHostName() {
+        try {
+            return InetAddress.getLocalHost().getCanonicalHostName();
+        } 
+        catch (UnknownHostException e) {
+            return "localhost";
         }
-
-        String srcClassName = record.getSourceClassName();
-        String srcMethodName = record.getSourceMethodName();
-
-        srcClassName = srcClassName.substring(srcClassName.lastIndexOf(".") + 1);
-
-        return String.format("%5$tm/%5$td/%5$ty %5$tH:%5$tM:%5$tS [%s]: %s\t[%s.%s]%n",
-                record.getLevel(), msg, srcClassName, srcMethodName, new Date(record.getMillis()));
     }
-
+    
+    /** 
+     * Returns the best guess for the host IP
+     * 
+     * @return The host IP
+     */
+    public static String getLocalHostIP() {
+        try {
+            return InetAddress.getLocalHost().getHostAddress();
+        } 
+        catch (UnknownHostException e) {
+            return "127.0.0.1";
+        }
+    }
+    
+    /** 
+     * Returns the hex version of the IP for localhost
+     * 
+     * @return The hex IP value
+     */
+    public static String getLocalHostIPHexValue() {
+        try {
+            InetAddress ip = InetAddress.getLocalHost();
+            
+            String sRes = "";
+            for (byte b : ip.getAddress()) {
+                String sTmp = Integer.toHexString(b);
+                sRes += (sTmp.length() < 2) ? "0" + sTmp : sTmp.substring(sTmp.length() - 2);
+            }
+            
+            return sRes.toUpperCase();
+        } 
+        catch (UnknownHostException e) {
+            return "UNKNOWN";
+        }
+    }
 }
