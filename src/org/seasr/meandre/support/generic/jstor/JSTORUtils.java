@@ -43,18 +43,26 @@
 package org.seasr.meandre.support.generic.jstor;
 
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.httpclient.Cookie;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.cookie.CookiePolicy;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
-import org.seasr.meandre.support.generic.io.IOUtils;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.CookieStore;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.params.CookiePolicy;
+import org.apache.http.client.params.HttpClientParams;
+import org.apache.http.client.protocol.ClientContext;
+import org.apache.http.cookie.Cookie;
+import org.apache.http.impl.client.BasicCookieStore;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.params.HttpParams;
+import org.apache.http.protocol.BasicHttpContext;
+import org.apache.http.protocol.HttpContext;
+import org.apache.http.util.EntityUtils;
 
 /**
  *
@@ -155,27 +163,36 @@ public abstract class JSTORUtils {
      * @throws IOException Error occurred
      */
     private static String[] getResponseAndCookies(String url, int connectTimeout, int readTimeout) throws IOException {
-        HttpClient client = new HttpClient();
-        HttpConnectionManagerParams connectionParams = client.getHttpConnectionManager().getParams();
-        connectionParams.setConnectionTimeout(connectTimeout);
-        connectionParams.setSoTimeout(readTimeout);
-        client.getParams().setCookiePolicy(CookiePolicy.RFC_2109);
+        HttpParams params = new BasicHttpParams();
+        HttpConnectionParams.setConnectionTimeout(params, connectTimeout);
+        HttpConnectionParams.setSoTimeout(params, readTimeout);
+        HttpClientParams.setCookiePolicy(params, CookiePolicy.RFC_2109);
+        
+        // Create a local instance of cookie store
+        CookieStore cookieStore = new BasicCookieStore();
+
+        // Create local HTTP context
+        HttpContext localContext = new BasicHttpContext();
+        // Bind custom cookie store to the local context
+        localContext.setAttribute(ClientContext.COOKIE_STORE, cookieStore);
+
+        DefaultHttpClient client = new DefaultHttpClient(params);
 
         String response = null;
 
-        GetMethod getMethod = new GetMethod(url);
+        HttpGet getMethod = new HttpGet(url);
         try {
-            client.executeMethod(getMethod);
-            response = IOUtils.getTextFromReader(
-                    new InputStreamReader(getMethod.getResponseBodyAsStream()));
+            HttpResponse resp = client.execute(getMethod, localContext);
+            response = EntityUtils.toString(resp.getEntity());
+            
         }
         finally {
-            getMethod.releaseConnection();
+            client.getConnectionManager().shutdown();
         }
 
         StringBuffer sb = new StringBuffer();
-        for (Cookie cookie : client.getState().getCookies())
-            sb.append("; ").append(cookie.toExternalForm());
+        for (Cookie cookie : cookieStore.getCookies())
+            sb.append("; ").append(cookie.toString());
 
         String cookies = sb.substring(2);
 

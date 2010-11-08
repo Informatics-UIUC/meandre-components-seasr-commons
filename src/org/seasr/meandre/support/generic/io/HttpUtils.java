@@ -49,14 +49,23 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.util.Properties;
+import java.util.List;
 import java.util.Map.Entry;
+import java.util.Properties;
 
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpStatus;
-import org.apache.commons.httpclient.methods.PostMethod;
-import org.apache.commons.httpclient.methods.multipart.MultipartRequestEntity;
-import org.apache.commons.httpclient.methods.multipart.Part;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.StatusLine;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.mime.HttpMultipartMode;
+import org.apache.http.entity.mime.MultipartEntity;
+import org.apache.http.entity.mime.content.ContentBody;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.params.HttpParams;
+import org.apache.http.util.EntityUtils;
+import org.seasr.meandre.support.generic.util.KeyValuePair;
 
 /**
  * @author Boris Capitanu
@@ -152,24 +161,34 @@ public abstract class HttpUtils {
      * @return The response
      * @throws IOException
      */
-    public static String doPOST(String sUrl, String acceptHeader, Part[] parts) throws IOException {
-        PostMethod postMethod = new PostMethod(sUrl);
-        try {
-            if (acceptHeader != null) postMethod.setRequestHeader("accept", acceptHeader);
-            postMethod.setRequestEntity(new MultipartRequestEntity(parts, postMethod.getParams()));
-            HttpClient httpClient = new HttpClient();
-            httpClient.getHttpConnectionManager().getParams().setConnectionTimeout(5000);
+    public static String doPOST(String sUrl, String acceptHeader, List<KeyValuePair<String, ContentBody>> parts) throws IOException {
+        HttpParams params = new BasicHttpParams();
+        HttpConnectionParams.setConnectionTimeout(params, 5000);
 
-            int statusCode = httpClient.executeMethod(postMethod);
+        DefaultHttpClient client = new DefaultHttpClient(params);
+        try {
+            MultipartEntity multipartEntity = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
+            for (KeyValuePair<String, ContentBody> part : parts)
+                multipartEntity.addPart(part.getKey(), part.getValue());
+
+            HttpPost postMethod = new HttpPost(sUrl);
+            postMethod.setEntity(multipartEntity);
+            if (acceptHeader != null) postMethod.addHeader("accept", acceptHeader);
+
+            HttpResponse response = client.execute(postMethod);
+            StatusLine statusLine = response.getStatusLine();
+            int statusCode = statusLine.getStatusCode();
+            
+            HttpEntity entity = response.getEntity();
 
             if (statusCode / 100 == 2)
                 // 2xx codes represent success
-                return postMethod.getResponseBodyAsString();
+                return entity != null ? EntityUtils.toString(response.getEntity()) : null;
             else
-                throw new IOException(HttpStatus.getStatusText(statusCode));
+                throw new IOException(statusLine.getReasonPhrase());
         }
         finally {
-            postMethod.releaseConnection();
+            client.getConnectionManager().shutdown();
         }
     }
 
