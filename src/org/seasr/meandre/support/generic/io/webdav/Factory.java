@@ -5,6 +5,7 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 
 import org.apache.http.HttpHost;
+import org.apache.http.auth.Credentials;
 import org.apache.http.conn.routing.HttpRoutePlanner;
 import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.seasr.meandre.support.generic.io.webdav.model.ObjectFactory;
@@ -56,27 +57,27 @@ public class Factory {
     }
 
     public WebdavClient begin() throws WebdavClientException {
-        return this.begin(null, null, null, null);
+        return this.begin(null, null, null);
     }
 
     public WebdavClient begin(HttpHost host) throws WebdavClientException {
-        return this.begin(host, null, null, null);
+        return this.begin(host, null, null);
     }
 
     public WebdavClient begin(HttpHost host, SSLSocketFactory sslSocketFactory) throws WebdavClientException {
-        return this.begin(host, null, null, sslSocketFactory);
+        return this.begin(host, null, sslSocketFactory);
     }
 
-    public WebdavClient begin(HttpHost host, String username, String password) throws WebdavClientException {
-        return this.begin(host, username, password, null);
+    public WebdavClient begin(HttpHost host, Credentials creds) throws WebdavClientException {
+        return this.begin(host, creds, null);
     }
 
-    public WebdavClient begin(HttpHost host, String username, String password, SSLSocketFactory sslSocketFactory) throws WebdavClientException {
-        return this.begin(host, username, password, sslSocketFactory, null);
+    public WebdavClient begin(HttpHost host, Credentials creds, SSLSocketFactory sslSocketFactory) throws WebdavClientException {
+        return this.begin(host, creds, sslSocketFactory, null);
     }
 
-    public WebdavClient begin(HttpHost host, String username, String password, SSLSocketFactory sslSocketFactory, HttpRoutePlanner routePlanner)
+    public WebdavClient begin(HttpHost host, Credentials creds, SSLSocketFactory sslSocketFactory, HttpRoutePlanner routePlanner)
             throws WebdavClientException {
-        return new WebdavClientImpl(this, host, username, password, sslSocketFactory, routePlanner);
+        return new WebdavClientImpl(this, host, creds, sslSocketFactory, routePlanner);
     }
 }

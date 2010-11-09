@@ -19,6 +19,7 @@ import java.util.List;
 
 import org.apache.http.HttpHost;
 import org.apache.http.HttpStatus;
+import org.apache.http.auth.UsernamePasswordCredentials;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -61,7 +62,7 @@ public class WebdavClientTest {
         writer.write("This is a test file" + System.getProperty("line.separator"));
         writer.flush();
 
-        client = WebdavClientFactory.begin(new HttpHost(server), username, password);
+        client = WebdavClientFactory.begin(new HttpHost(server), new UsernamePasswordCredentials(username, password));
 
         if (client.exists(testFolder)) client.delete(testFolder);
 

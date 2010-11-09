@@ -15,7 +15,6 @@ import org.apache.http.HttpVersion;
 import org.apache.http.StatusLine;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
-import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
@@ -58,21 +57,21 @@ public class WebdavClientImpl implements WebdavClient {
     
     
     public WebdavClientImpl(Factory factory) throws WebdavClientException {
-        this(factory, null, null, null, null, null);
+        this(factory, null, null, null, null);
     }
 
     public WebdavClientImpl(Factory factory, HttpHost host) throws WebdavClientException {
-        this(factory, host, null, null, null, null);
+        this(factory, host, null, null, null);
     }
 
-    public WebdavClientImpl(Factory factory, HttpHost host, String username, String password) throws WebdavClientException {
-        this(factory, host, username, password, null, null);
+    public WebdavClientImpl(Factory factory, HttpHost host, Credentials creds) throws WebdavClientException {
+        this(factory, host, creds, null, null);
     }
 
     /**
      * Main constructor.
      */
-    public WebdavClientImpl(Factory factory, HttpHost host, String username, String password, SSLSocketFactory sslSocketFactory, HttpRoutePlanner routePlanner)
+    public WebdavClientImpl(Factory factory, HttpHost host, Credentials creds, SSLSocketFactory sslSocketFactory, HttpRoutePlanner routePlanner)
             throws WebdavClientException {
         this.factory = factory;
         this.host = host;
@@ -97,11 +96,9 @@ public class WebdavClientImpl implements WebdavClient {
         // for proxy configurations
         if (routePlanner != null) this.client.setRoutePlanner(routePlanner);
 
-        if ((username != null) && (password != null)) {
-            Credentials credentials = new UsernamePasswordCredentials(username, password);
-
+        if (creds != null) {
             AuthScope authScope = (host != null) ? new AuthScope(host.getHostName(), host.getPort()) : new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT);
-            this.client.getCredentialsProvider().setCredentials(authScope, credentials);
+            this.client.getCredentialsProvider().setCredentials(authScope, creds);
         }
     }
 
