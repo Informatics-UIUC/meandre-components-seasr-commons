@@ -36,13 +36,14 @@ import org.seasr.meandre.support.generic.io.webdav.util.WebdavClientException;
 public class WebdavClientTest {
 
     // the test server
-    // final String server = "norma.ncsa.uiuc.edu";
-    final String server = "repository.seasr.org";
+    final String server = "******";   // put the correct server here
 
     // for private (authenticated) access
+    final String username = "******";  // put the correct user name here
+    final String password = "******";  // put the correct password here
+
+    
     final String testFolder = "/scratch/_WebdavClientTest/";
-    final String username = "webdavAdmin";
-    final String password = "w3bd1v";
 
     // for public access
     // final String testFolder = "/public-dav/_WebdavClientTest/";
