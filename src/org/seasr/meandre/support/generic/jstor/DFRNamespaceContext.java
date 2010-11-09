@@ -88,8 +88,7 @@ public class DFRNamespaceContext implements NamespaceContext {
     /* (non-Javadoc)
      * @see javax.xml.namespace.NamespaceContext#getPrefixes(java.lang.String)
      */
-    @SuppressWarnings("unchecked")
-    public Iterator getPrefixes(String namespaceURI) {
+    public Iterator<?> getPrefixes(String namespaceURI) {
         // TODO Auto-generated method stub
         return null;
     }

@@ -39,6 +39,7 @@ import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.params.HttpProtocolParams;
 import org.apache.http.util.EntityUtils;
+import org.seasr.meandre.support.generic.Version;
 import org.seasr.meandre.support.generic.io.webdav.model.Multistatus;
 import org.seasr.meandre.support.generic.io.webdav.model.Response;
 import org.seasr.meandre.support.generic.io.webdav.util.WebdavClientException;
@@ -81,7 +82,7 @@ public class WebdavClientImpl implements WebdavClient {
         ConnManagerParams.setMaxConnectionsPerRoute(params, connPerRoute);
         ConnManagerParams.setMaxTotalConnections(params, 100);
         HttpProtocolParams.setVersion(params, HttpVersion.HTTP_1_1);
-        HttpProtocolParams.setUserAgent(params, "Sardine/" + Version.getSpecification());
+        HttpProtocolParams.setUserAgent(params, "WebdavClient/" + Version.getFullVersion());
 
         SchemeRegistry schemeRegistry = new SchemeRegistry();
         schemeRegistry.register(new Scheme("http", PlainSocketFactory.getSocketFactory(), 80)); 

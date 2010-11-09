@@ -14,8 +14,7 @@ public abstract class ClasspathUtils {
      * @return A URL to the dependency, or null if not found
      * @throws Exception Thrown if something went wrong
      */
-    @SuppressWarnings("unchecked")
-    public static URL findJARInClasspath(String jarName, Class clazz) throws Exception {
+    public static URL findJARInClasspath(String jarName, Class<?> clazz) throws Exception {
         URL depURL = null;
 
         if (clazz != null) {

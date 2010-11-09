@@ -113,9 +113,8 @@ public abstract class PDFUtils {
      * @param pageTree The page tree root node
      * @param sb The StringBuilder to use to store the extracted text
      */
-    @SuppressWarnings("unchecked")
     private static void extractText(PDPageTree pageTree, StringBuilder sb) {
-        for (Iterator it = pageTree.getKids().iterator(); it.hasNext();) {
+        for (Iterator<?> it = pageTree.getKids().iterator(); it.hasNext();) {
             PDPageNode node = (PDPageNode) it.next();
             if (node.isPage()) {
                 CSTextExtractor extractor = new CSTextExtractor();
