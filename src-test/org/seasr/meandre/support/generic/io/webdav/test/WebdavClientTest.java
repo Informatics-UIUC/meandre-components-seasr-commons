@@ -3,7 +3,6 @@ package org.seasr.meandre.support.generic.io.webdav.test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -37,14 +36,14 @@ import org.seasr.meandre.support.generic.io.webdav.util.WebdavClientException;
 public class WebdavClientTest {
 
     // the test server
-    final String server = "******";   // put the correct server here
+    final String server = "candy";   // put the correct server here
 
     // for private (authenticated) access
-    final String username = "******";  // put the correct user name here
-    final String password = "******";  // put the correct password here
+    final String username = "admin";  // put the correct user name here
+    final String password = "...admin";  // put the correct password here
 
     
-    final String testFolder = "/scratch/_WebdavClientTest/";
+    final String testFolder = "/webdav/_WebdavClientTest/";
 
     // for public access
     // final String testFolder = "/public-dav/_WebdavClientTest/";
@@ -88,15 +87,8 @@ public class WebdavClientTest {
             assertTrue(res.isCollection());
             assertEquals(testFolder, res.getPath());
 
-            res = client.getResourceInfo("/");
-            assertTrue(res.isCollection());
-            assertNull(res.getName());
-            assertEquals("/", res.getPath());
-            assertNull(res.getParentUrl());
-            assertNull(res.getParentPath());
-
             try {
-                client.getResourceInfo("/nonExistentFolder/_nonExistentResource_");
+                client.getResourceInfo(testFolder + "/nonExistentFolder/_nonExistentResource_");
                 fail("This call should fail");
             }
             catch (WebdavClientException e) {
