@@ -54,6 +54,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.net.URLDecoder;
 
 import org.seasr.meandre.support.generic.io.exceptions.ResourceNotFoundException;
@@ -90,7 +91,24 @@ public abstract class StreamUtils {
      * @throws IOException Thrown if the resource is invalid, does not exist, or cannot be opened
      */
     public static InputStream getInputStreamForResource(URI uri) throws IOException {
-        return getURLforResource(uri).openStream();
+        return getInputStreamForResource(uri, 0, 0);
+    }
+
+    /**
+     * Returns an InputStream for the specified resource.
+     *
+     * @param uri The resource location (can be a URL or a local file)
+     * @param connectTimeout The connection timeout in ms (0 = infinite)
+     * @param readTimeout The read timeout in ms (0 = infinite)
+     * @return The InputStream to use to read from the resource
+     * @throws IOException Thrown if the resource is invalid, does not exist, cannot be opened, or if a timeout occurred
+     */
+    public static InputStream getInputStreamForResource(URI uri, int connectTimeout, int readTimeout) throws IOException {
+        URLConnection connection = getURLforResource(uri).openConnection();
+        connection.setConnectTimeout(connectTimeout);
+        connection.setReadTimeout(readTimeout);
+
+        return connection.getInputStream();
     }
 
     /**

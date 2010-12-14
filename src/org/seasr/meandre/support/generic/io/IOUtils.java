@@ -64,7 +64,20 @@ public abstract class IOUtils {
      * @throws IOException Thrown if a problem occurred when creating the reader
      */
     public static Reader getReaderForResource(URI uri) throws IOException  {
-       return new InputStreamReader(StreamUtils.getURLforResource(uri).openStream());
+       return getReaderForResource(uri, 0, 0);
+    }
+
+    /**
+     * Opens the location from where to read.
+     *
+     * @param uri The location to read from (can be a URL or a local file)
+     * @param connectTimeout The connection timeout in ms (0 = infinite)
+     * @param readTimeout The read timeout in ms (0 = infinite)
+     * @return The reader for this location
+     * @throws IOException Thrown if a timeout occurred or if a problem occurred when creating the reader
+     */
+    public static Reader getReaderForResource(URI uri, int connectTimeout, int readTimeout) throws IOException {
+        return new InputStreamReader(StreamUtils.getInputStreamForResource(uri, connectTimeout, readTimeout));
     }
 
     /**
