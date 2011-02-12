@@ -84,11 +84,23 @@ public abstract class IOUtils {
      * Gets a Writer that can be used to write to a resource
      *
      * @param uri The location to write to (can be URL or local file)
+     * @param append True to append / False otherwise
+     * @return The writer for this location
+     * @throws IOException Thrown if a problem occurred when creating the writer
+     */
+    public static Writer getWriterForResource(URI uri, boolean append) throws IOException {
+        return new OutputStreamWriter(StreamUtils.getOutputStreamForResource(uri, append));
+    }
+
+    /**
+     * Gets a Writer that can be used to write to a resource
+     *
+     * @param uri The location to write to (can be URL or local file)
      * @return The writer for this location
      * @throws IOException Thrown if a problem occurred when creating the writer
      */
     public static Writer getWriterForResource(URI uri) throws IOException {
-        return new OutputStreamWriter(StreamUtils.getOutputStreamForResource(uri));
+        return getWriterForResource(uri, false);
     }
 
     /**

@@ -115,10 +115,11 @@ public abstract class StreamUtils {
      * Returns an OutputStream for the specified resource
      *
      * @param uri The resource location (specified as either file:// or local path)
+     * @param append True to append / False otherwise
      * @return The OutputStream to use to write to the resource
      * @throws IOException Thrown if the resource is invalid
      */
-    public static OutputStream getOutputStreamForResource(URI uri) throws IOException {
+    public static OutputStream getOutputStreamForResource(URI uri, boolean append) throws IOException {
         URL url = getURLforResource(uri);
 
         if (url.getProtocol().equalsIgnoreCase("file"))
@@ -132,6 +133,17 @@ public abstract class StreamUtils {
         else
             // TODO: add webdav support
             throw new UnsupportedOperationException("Can only write to file:// or local resources");
+    }
+
+    /**
+     * Returns an OutputStream for the specified resource
+     *
+     * @param uri The resource location (specified as either file:// or local path)
+     * @return The OutputStream to use to write to the resource
+     * @throws IOException Thrown if the resource is invalid
+     */
+    public static OutputStream getOutputStreamForResource(URI uri) throws IOException {
+        return getOutputStreamForResource(uri, false);
     }
 
     /**
