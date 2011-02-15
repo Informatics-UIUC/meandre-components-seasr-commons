@@ -124,7 +124,7 @@ public abstract class StreamUtils {
 
         if (url.getProtocol().equalsIgnoreCase("file"))
             try {
-                return new FileOutputStream(new File(url.toURI()));
+                return new FileOutputStream(new File(url.toURI()), append);
             }
             catch (URISyntaxException e) {
                 // should never happen
