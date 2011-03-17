@@ -63,31 +63,6 @@ public class JARInstaller {
         SUCCESS, FAILED, SKIPPED
     }
 
-	/**  Deletes all files and subdirectories under dir.
-	 *   Returns true if all deletions were successful.
-	 *   If a deletion fails, the method stops attempting to delete and returns false.
-	 *
-	 * @param dir The directory to delete
-	 * @return True if it was properly cleaned, false otherwise
-	 */
-    protected static boolean deleteDir(File dir) {
-    	if (dir.isDirectory()) {
-            String[] children = dir.list();
-            for (int i=0; i<children.length; i++) {
-                boolean success = deleteDir(new File(dir, children[i]));
-                if (!success) {
-                    return false;
-                }
-            }
-        }
-
-        // The directory is now empty so delete it
-    	if (dir.exists())
-            return dir.delete();
-    	else
-    		return true;
-    }
-
     /** Install the contents of the jar at the given location. If location
      * exists no installation is performed, unless forced.
      *
@@ -101,7 +76,7 @@ public class JARInstaller {
     	// Basic checking
     	if ( fRootDir.exists() ) {
     		if ( bForce ) {
-    			boolean bOK = deleteDir(fRootDir);
+    			boolean bOK = FileUtils.deleteFileOrDirectory(fRootDir);
     			if ( !bOK ) return InstallStatus.FAILED;
     		}
     		else {
@@ -128,7 +103,7 @@ public class JARInstaller {
             }
     	} catch (Throwable t) {
     	    t.printStackTrace();
-    		deleteDir(new File(sDestDir));
+    		FileUtils.deleteFileOrDirectory(new File(sDestDir));
     		return InstallStatus.FAILED;
     	}
 
