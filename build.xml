@@ -169,6 +169,8 @@
                 <attribute name="Build-Date" value="${TIMESTAMP}"/>
                 <attribute name="Built-By" value="${user.name}"/>
             </manifest>
+
+            <fileset dir="${src.dir}" includes="org/seasr/meandre/support/generic/io/webdav/**"/>
         </jar>
         
         <jar destfile="${dist.dir}/webdavclient-deps-${version}.jar" basedir="${build.dir}" includes="org/seasr/meandre/support/generic/io/webdav/**">
@@ -179,6 +181,8 @@
                 <attribute name="Build-Date" value="${TIMESTAMP}"/>
                 <attribute name="Built-By" value="${user.name}"/>
             </manifest>
+
+            <fileset dir="${src.dir}" includes="org/seasr/meandre/support/generic/io/webdav/**"/>
             
             <zipgroupfileset dir="${lib.dir}">
                 <include name="httpclient*.jar"/>
