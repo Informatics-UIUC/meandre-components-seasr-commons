@@ -323,7 +323,7 @@ public class GeoLocation {
 
     private static Object getCacheSyncObject(final String value) {
         _locks.putIfAbsent(value, new Object());
-        return _cache.get(value);
+        return _locks.get(value);
     }
 
     public static void disposeCache() {
