@@ -57,14 +57,16 @@ import org.seasr.meandre.support.generic.io.HttpUtils;
  * Provides geocoding functionality based on the Yahoo geocoding service
  * http://developer.yahoo.com/geo/placefinder/guide/index.html
  *
+ * SEASR API KEY: yFUeASDV34FRJWiaM8pxF0eJ7d2MizbUNVB2K6in0Ybwji5YB0D4ZODR2y3LqQ--
+ *
  * @author Boris Capitanu
  */
 public class GeoLocation {
     //
     // GeoLocation Service
     //
-    private static final String API_KEY = "yFUeASDV34FRJWiaM8pxF0eJ7d2MizbUNVB2K6in0Ybwji5YB0D4ZODR2y3LqQ--";
     private static final String API_URL = "http://where.yahooapis.com/geocode";
+    private static String API_KEY;
 
     private String _queryPlaceName;
     private String _locale;
@@ -200,6 +202,10 @@ public class GeoLocation {
     private static ConcurrentMap<String, GeoLocation[]> _cache = new ConcurrentHashMap<String, GeoLocation[]>();
     private static ConcurrentMap<String, Object> _locks = new ConcurrentHashMap<String, Object>();
 
+    public static void setAPIKey(String key) {
+        API_KEY = key;
+    }
+
     public static GeoLocation[] geocode(String placeName) throws GeocodingException, IOException {
         return geocode(placeName, true);
     }
@@ -221,6 +227,10 @@ public class GeoLocation {
     }
 
     private static GeoLocation[] geocodeInternal(String placeName) throws GeocodingException, IOException {
+        if (API_KEY == null)
+            throw new IllegalArgumentException("Yahoo API key not set!  Use " + GeoLocation.class.getSimpleName() +
+                    ".setAPIKey(key) to set the API key before invoking any other methods.");
+
         String request = String.format("%s?q=%s&flags=GJ&appid=%s", API_URL, URLEncoder.encode(placeName, "UTF-8"), API_KEY);
         String response = HttpUtils.doGET(request, null);
 
