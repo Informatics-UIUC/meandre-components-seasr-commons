@@ -82,6 +82,7 @@ public class GeoLocation {
     private String _hash;
     private int _woeid;
     private int _woeType;
+    private boolean _isCreated;
 
     private GeoLocation() { }
 
@@ -145,6 +146,19 @@ public class GeoLocation {
 
     public int getWOEType() {
         return _woeType;
+    }
+
+    /**
+     * Was this location created manually through the 'createLocation' factory method (vs. obtained by invoking the geocoding service)?
+     *
+     * @return True for yes, False for no
+     */
+    public boolean isCreated() {
+        return _isCreated;
+    }
+
+    public boolean isValid() {
+        return _latitude != null && _latitude.length() != 0 && _longitude != null && _longitude.length() != 0;
     }
 
     private void setQueryPlaceName(String queryPlaceName) {
@@ -226,6 +240,14 @@ public class GeoLocation {
         }
     }
 
+    public static GeoLocation createLocation(double latitude, double longitude) {
+        GeoLocation location = new GeoLocation();
+        location._isCreated = true;
+        location.setLocation(Double.toString(latitude), Double.toString(longitude));
+
+        return location;
+    }
+
     private static GeoLocation[] geocodeInternal(String placeName) throws GeocodingException, IOException {
         if (API_KEY == null)
             throw new IllegalArgumentException("Yahoo API key not set!  Use " + GeoLocation.class.getSimpleName() +
@@ -251,6 +273,7 @@ public class GeoLocation {
                 for (int i = 0, iMax = jaResults.length(); i < iMax; i++) {
                     JSONObject joLocation = jaResults.getJSONObject(i);
                     GeoLocation location = new GeoLocation();
+                    location._isCreated = false;
                     location.setQueryPlaceName(placeName);
                     location.setLocale(locale);
                     if (joLocation.has("quality"))
