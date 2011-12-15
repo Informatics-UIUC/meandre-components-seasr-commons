@@ -256,69 +256,83 @@ public class GeoLocation {
         String request = String.format("%s?q=%s&flags=GJ&appid=%s", API_URL, URLEncoder.encode(placeName, "UTF-8"), API_KEY);
         String response = HttpUtils.doGET(request, null);
 
+        GeoLocation[] locations;
         try {
-            JSONObject joResponse = new JSONObject(response);
-            JSONObject joResultSet = joResponse.getJSONObject("ResultSet");
-            int errCode = joResultSet.getInt("Error");
-            String errMsg = joResultSet.getString("ErrorMessage");
-            if (errCode != 0) throw new GeocodingException(errMsg);
-
-            GeoLocation[] locations = null;
-
-            int found = joResultSet.getInt("Found");
-            if (found > 0) {
-                locations = new GeoLocation[found];
-                String locale = joResultSet.getString("Locale");
-                JSONArray jaResults = joResultSet.getJSONArray("Results");
-                for (int i = 0, iMax = jaResults.length(); i < iMax; i++) {
-                    JSONObject joLocation = jaResults.getJSONObject(i);
-                    GeoLocation location = new GeoLocation();
-                    location._isCreated = false;
-                    location.setQueryPlaceName(placeName);
-                    location.setLocale(locale);
-                    if (joLocation.has("quality"))
-                        location.setQuality(joLocation.getInt("quality"));
-                    if (joLocation.has("latitude") && joLocation.has("longitude"))
-                        location.setLocation(joLocation.getString("latitude"), joLocation.getString("longitude"));
-                    if (joLocation.has("offsetlat") && joLocation.has("offsetlon"))
-                        location.setOffsetLocation(joLocation.getString("offsetlat"), joLocation.getString("offsetlon"));
-                    if (joLocation.has("radius"))
-                        location.setRadius(joLocation.getInt("radius"));
-                    if (joLocation.has("name"))
-                        location.setName(joLocation.getString("name"));
-                    if (joLocation.has("line1") && joLocation.has("line2") && joLocation.has("line3") && joLocation.has("line4"))
-                        location.setAddress(joLocation.getString("line1"), joLocation.getString("line2"),
-                                joLocation.getString("line3"), joLocation.getString("line4"));
-                    AddressDetails addressDetails = new AddressDetails(
-                            joLocation.has("house") ? joLocation.getString("house") : null,
-                            joLocation.has("street") ? joLocation.getString("street") : null,
-                            joLocation.has("xstreet") ? joLocation.getString("xstreet") : null,
-                            joLocation.has("unittype") ? joLocation.getString("unittype") : null,
-                            joLocation.has("unit") ? joLocation.getString("unit") : null,
-                            joLocation.has("postal") ? joLocation.getString("postal") : null,
-                            joLocation.has("level4") ? joLocation.getString("level4") : null,
-                            joLocation.has("level3") ? joLocation.getString("level3") : null,
-                            joLocation.has("level2") ? joLocation.getString("level2") : null,
-                            joLocation.has("level2code") ? joLocation.getString("level2code") : null,
-                            joLocation.has("level1") ? joLocation.getString("level1") : null,
-                            joLocation.has("level1code") ? joLocation.getString("level1code") : null,
-                            joLocation.has("level0") ? joLocation.getString("level0") : null,
-                            joLocation.has("level0code") ? joLocation.getString("level0code") : null,
-                            joLocation.has("uzip") ? joLocation.getString("uzip") : null);
-                    location.setAddressDetails(addressDetails);
-                    if (joLocation.has("hash"))
-                        location.setHash(joLocation.getString("hash"));
-                    if (joLocation.has("woeid") && joLocation.has("woetype"))
-                        location.setWOE(joLocation.getInt("woeid"), joLocation.getInt("woetype"));
-                    locations[i] = location;
-                }
-            }
-
-            return locations;
+            locations = parseResponse(response);
         }
         catch (JSONException e) {
             throw new IOException("Error parsing geocoding response", e);
         }
+
+        for (GeoLocation location : locations)
+            location.setQueryPlaceName(placeName);
+
+        return locations;
+    }
+
+    private static GeoLocation[] parseResponse(String response) throws GeocodingException, IOException, JSONException {
+        JSONObject joResponse = new JSONObject(response);
+        JSONObject joResultSet = joResponse.getJSONObject("ResultSet");
+        int errCode = joResultSet.getInt("Error");
+        String errMsg = joResultSet.getString("ErrorMessage");
+        if (errCode != 0) throw new GeocodingException(errMsg);
+
+        String version = joResultSet.getString("version");
+        if (!version.startsWith("1."))
+            throw new GeocodingException(String.format("Unsupported response version: Expected version 1.x - received %s. " +
+            		"The code needs to be updated to parse these responses correctly.", version));
+
+        GeoLocation[] locations = null;
+
+        int found = joResultSet.getInt("Found");
+        if (found > 0) {
+            locations = new GeoLocation[found];
+            String locale = joResultSet.getString("Locale");
+            JSONArray jaResults = joResultSet.getJSONArray("Results");
+            for (int i = 0, iMax = jaResults.length(); i < iMax; i++) {
+                JSONObject joLocation = jaResults.getJSONObject(i);
+                GeoLocation location = new GeoLocation();
+                location._isCreated = false;
+                location.setLocale(locale);
+                if (joLocation.has("quality"))
+                    location.setQuality(joLocation.getInt("quality"));
+                if (joLocation.has("latitude") && joLocation.has("longitude"))
+                    location.setLocation(joLocation.getString("latitude"), joLocation.getString("longitude"));
+                if (joLocation.has("offsetlat") && joLocation.has("offsetlon"))
+                    location.setOffsetLocation(joLocation.getString("offsetlat"), joLocation.getString("offsetlon"));
+                if (joLocation.has("radius"))
+                    location.setRadius(joLocation.getInt("radius"));
+                if (joLocation.has("name"))
+                    location.setName(joLocation.getString("name"));
+                if (joLocation.has("line1") && joLocation.has("line2") && joLocation.has("line3") && joLocation.has("line4"))
+                    location.setAddress(joLocation.getString("line1"), joLocation.getString("line2"),
+                            joLocation.getString("line3"), joLocation.getString("line4"));
+                AddressDetails addressDetails = new AddressDetails(
+                        joLocation.has("house") ? joLocation.getString("house") : null,
+                        joLocation.has("street") ? joLocation.getString("street") : null,
+                        joLocation.has("xstreet") ? joLocation.getString("xstreet") : null,
+                        joLocation.has("unittype") ? joLocation.getString("unittype") : null,
+                        joLocation.has("unit") ? joLocation.getString("unit") : null,
+                        joLocation.has("postal") ? joLocation.getString("postal") : null,
+                        joLocation.has("level4") ? joLocation.getString("level4") : null,
+                        joLocation.has("level3") ? joLocation.getString("level3") : null,
+                        joLocation.has("level2") ? joLocation.getString("level2") : null,
+                        joLocation.has("level2code") ? joLocation.getString("level2code") : null,
+                        joLocation.has("level1") ? joLocation.getString("level1") : null,
+                        joLocation.has("level1code") ? joLocation.getString("level1code") : null,
+                        joLocation.has("level0") ? joLocation.getString("level0") : null,
+                        joLocation.has("level0code") ? joLocation.getString("level0code") : null,
+                        joLocation.has("uzip") ? joLocation.getString("uzip") : null);
+                location.setAddressDetails(addressDetails);
+                if (joLocation.has("hash"))
+                    location.setHash(joLocation.getString("hash"));
+                if (joLocation.has("woeid") && joLocation.has("woetype"))
+                    location.setWOE(joLocation.getInt("woeid"), joLocation.getInt("woetype"));
+                locations[i] = location;
+            }
+        }
+
+        return locations;
     }
 
     private static Object getCacheSyncObject(final String value) {
@@ -329,5 +343,60 @@ public class GeoLocation {
     public static void disposeCache() {
         _cache.clear();
         _locks.clear();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) return true;
+        if (obj == null || !(obj instanceof GeoLocation)) return false;
+
+        GeoLocation other = (GeoLocation) obj;
+        return equalsNull(this.getLatitude(), other.getLatitude()) &&
+               equalsNull(this.getLongitude(), other.getLongitude()) &&
+               this.getQuality() == other.getQuality() &&
+               equalsNull(this.getAddressDetails(), other.getAddressDetails()) &&
+               equalsNull(this.getHash(), other.getHash()) &&
+               equalsNull(this.getOffsetLat(), other.getOffsetLat()) &&
+               equalsNull(this.getOffsetLon(), other.getOffsetLon()) &&
+               equalsNull(this.getRadius(), other.getRadius()) &&
+               equalsNull(this.getWOEId(), other.getWOEId()) &&
+               equalsNull(this.getWOEType(), other.getWOEType());
+    }
+
+    public boolean equalsPosition(GeoLocation other) {
+        if (other == this) return true;
+        if (other == null) return false;
+
+        return equalsNull(this.getLatitude(), other.getLatitude()) &&
+               equalsNull(this.getLongitude(), other.getLongitude());
+    }
+
+    private boolean equalsNull(Object obj1, Object obj2) {
+        if (obj1 == null || obj2 == null)
+            return obj1 == obj2;
+
+        return obj1.equals(obj2);
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + hashCodeNull(_latitude);
+        result = prime * result + hashCodeNull(_longitude);
+        result = prime * result + _quality;
+        result = prime * result + hashCodeNull(getAddressDetails());
+        result = prime * result + hashCodeNull(_hash);
+        result = prime * result + hashCodeNull(_offsetLat);
+        result = prime * result + hashCodeNull(_offsetLon);
+        result = prime * result + hashCodeNull(_radius);
+        result = prime * result + hashCodeNull(_woeid);
+        result = prime * result + hashCodeNull(_woeType);
+
+        return result;
+    }
+
+    private int hashCodeNull(Object obj) {
+        return obj == null ? 0 : obj.hashCode();
     }
 }

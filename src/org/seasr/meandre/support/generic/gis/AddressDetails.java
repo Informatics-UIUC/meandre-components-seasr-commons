@@ -142,4 +142,58 @@ public class AddressDetails {
     public String getZip() {
         return _zip;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) return true;
+        if (obj == null || !(obj instanceof AddressDetails)) return false;
+
+        AddressDetails other = (AddressDetails) obj;
+        return equalsNull(this.getCity(), other.getCity()) &&
+               equalsNull(this.getCountry(), other.getCountry()) &&
+               equalsNull(this.getCountryCode(), other.getCountryCode()) &&
+               equalsNull(this.getCounty(), other.getCounty()) &&
+               equalsNull(this.getCountyCode(), other.getCountyCode()) &&
+               equalsNull(this.getHouse(), other.getHouse()) &&
+               equalsNull(this.getNeighborhood(), other.getNeighborhood()) &&
+               equalsNull(this.getPostal(), other.getPostal()) &&
+               equalsNull(this.getState(), other.getState()) &&
+               equalsNull(this.getStateCode(), other.getStateCode()) &&
+               equalsNull(this.getStreet(), other.getStreet()) &&
+               equalsNull(this.getUnit(), other.getUnit()) &&
+               equalsNull(this.getUnitType(), other.getUnitType()) &&
+               equalsNull(this.getXStreet(), other.getXStreet()) &&
+               equalsNull(this.getZip(), other.getZip());
+    }
+
+    private boolean equalsNull(Object obj1, Object obj2) {
+        if (obj1 == null || obj2 == null)
+            return obj1 == obj2;
+
+        return obj1.equals(obj2);
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + hashCodeNull(_city);
+        result = prime * result + hashCodeNull(_countryCode);
+        result = prime * result + hashCodeNull(_countyCode);
+        result = prime * result + hashCodeNull(_house);
+        result = prime * result + hashCodeNull(_neighborhood);
+        result = prime * result + hashCodeNull(_postal);
+        result = prime * result + hashCodeNull(_stateCode);
+        result = prime * result + hashCodeNull(_street);
+        result = prime * result + hashCodeNull(_unit);
+        result = prime * result + hashCodeNull(_unitType);
+        result = prime * result + hashCodeNull(_xstreet);
+        result = prime * result + hashCodeNull(_zip);
+
+        return result;
+    }
+
+    private int hashCodeNull(Object obj) {
+        return obj == null ? 0 : obj.hashCode();
+    }
 }
