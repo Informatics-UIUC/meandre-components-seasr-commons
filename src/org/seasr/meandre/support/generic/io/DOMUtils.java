@@ -71,7 +71,7 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 /**
- * Utility class for manipulating DOM documents
+ * Utility class for manipulating DOM documents (namespace aware, non-validating)
  *
  * @author Boris Capitanu
  */
@@ -91,13 +91,20 @@ public abstract class DOMUtils {
 
     static {
         DOC_FACT.setNamespaceAware(true);
+        DOC_FACT.setValidating(false);
+
+        try {
+            DOC_FACT.setFeature("http://xml.org/sax/features/namespaces", true);
+            DOC_FACT.setFeature("http://xml.org/sax/features/validation", false);
+            DOC_FACT.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false);
+            DOC_FACT.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+        }
+        catch (ParserConfigurationException e) { }
 
         try {
             DOC_BUILDER = DOC_FACT.newDocumentBuilder();
         }
-        catch (ParserConfigurationException e) {
-            DOC_BUILDER = null;
-        }
+        catch (ParserConfigurationException e) { }
     }
 
     /**
