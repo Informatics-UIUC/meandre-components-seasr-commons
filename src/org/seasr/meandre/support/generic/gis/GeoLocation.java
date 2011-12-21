@@ -71,10 +71,8 @@ public class GeoLocation {
     private String _queryPlaceName;
     private String _locale;
     private int _quality;
-    private String _latitude;
-    private String _longitude;
-    private String _offsetLat;
-    private String _offsetLon;
+    private LatLngCoord _coord;
+    private LatLngCoord _offsetCoord;
     private int _radius;
     private String _name;
     private String[] _lines;
@@ -99,20 +97,28 @@ public class GeoLocation {
         return _quality;
     }
 
-    public String getLatitude() {
-        return _latitude;
+    public Double getLatitude() {
+        return _coord.getLatitude();
     }
 
-    public String getLongitude() {
-        return _longitude;
+    public Double getLongitude() {
+        return _coord.getLongitude();
     }
 
-    public String getOffsetLat() {
-        return _offsetLat;
+    public LatLngCoord getCoord() {
+        return _coord;
     }
 
-    public String getOffsetLon() {
-        return _offsetLon;
+    public Double getOffsetLat() {
+        return _offsetCoord.getLatitude();
+    }
+
+    public Double getOffsetLon() {
+        return _offsetCoord.getLongitude();
+    }
+
+    public LatLngCoord getOffsetCoord() {
+        return _offsetCoord;
     }
 
     public int getRadius() {
@@ -158,7 +164,7 @@ public class GeoLocation {
     }
 
     public boolean isValid() {
-        return _latitude != null && _latitude.length() != 0 && _longitude != null && _longitude.length() != 0;
+        return _coord.isValid();
     }
 
     private void setQueryPlaceName(String queryPlaceName) {
@@ -174,13 +180,11 @@ public class GeoLocation {
     }
 
     private void setLocation(String latitude, String longitude) {
-        _latitude = latitude;
-        _longitude = longitude;
+        _coord = new LatLngCoord(latitude, longitude);
     }
 
     private void setOffsetLocation(String offsetLat, String offsetLon) {
-        _offsetLat = offsetLat;
-        _offsetLon = offsetLon;
+        _offsetCoord = new LatLngCoord(offsetLat, offsetLon);
     }
 
     private void setRadius(int radius) {
@@ -351,13 +355,11 @@ public class GeoLocation {
         if (obj == null || !(obj instanceof GeoLocation)) return false;
 
         GeoLocation other = (GeoLocation) obj;
-        return equalsNull(this.getLatitude(), other.getLatitude()) &&
-               equalsNull(this.getLongitude(), other.getLongitude()) &&
+        return equalsNull(this.getCoord(), other.getCoord()) &&
+               equalsNull(this.getOffsetCoord(), other.getOffsetCoord()) &&
                this.getQuality() == other.getQuality() &&
                equalsNull(this.getAddressDetails(), other.getAddressDetails()) &&
                equalsNull(this.getHash(), other.getHash()) &&
-               equalsNull(this.getOffsetLat(), other.getOffsetLat()) &&
-               equalsNull(this.getOffsetLon(), other.getOffsetLon()) &&
                equalsNull(this.getRadius(), other.getRadius()) &&
                equalsNull(this.getWOEId(), other.getWOEId()) &&
                equalsNull(this.getWOEType(), other.getWOEType());
@@ -367,8 +369,7 @@ public class GeoLocation {
         if (other == this) return true;
         if (other == null) return false;
 
-        return equalsNull(this.getLatitude(), other.getLatitude()) &&
-               equalsNull(this.getLongitude(), other.getLongitude());
+        return equalsNull(this.getCoord(), other.getCoord());
     }
 
     private boolean equalsNull(Object obj1, Object obj2) {
@@ -382,13 +383,11 @@ public class GeoLocation {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + hashCodeNull(_latitude);
-        result = prime * result + hashCodeNull(_longitude);
+        result = prime * result + hashCodeNull(_coord);
+        result = prime * result + hashCodeNull(_offsetCoord);
         result = prime * result + _quality;
         result = prime * result + hashCodeNull(getAddressDetails());
         result = prime * result + hashCodeNull(_hash);
-        result = prime * result + hashCodeNull(_offsetLat);
-        result = prime * result + hashCodeNull(_offsetLon);
         result = prime * result + hashCodeNull(_radius);
         result = prime * result + hashCodeNull(_woeid);
         result = prime * result + hashCodeNull(_woeType);
