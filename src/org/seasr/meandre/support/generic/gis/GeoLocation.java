@@ -330,7 +330,8 @@ public class GeoLocation {
                 location.setAddressDetails(addressDetails);
                 if (joLocation.has("hash"))
                     location.setHash(joLocation.getString("hash"));
-                if (joLocation.has("woeid") && joLocation.has("woetype"))
+                if (joLocation.has("woeid") && joLocation.has("woetype") &&
+                        (joLocation.get("woeid") instanceof Integer) && (joLocation.get("woetype") instanceof Integer))
                     location.setWOE(joLocation.getInt("woeid"), joLocation.getInt("woetype"));
                 locations[i] = location;
             }
