@@ -268,8 +268,9 @@ public class GeoLocation {
             throw new IOException("Error parsing geocoding response", e);
         }
 
-        for (GeoLocation location : locations)
-            location.setQueryPlaceName(placeName);
+        if (locations != null)
+            for (GeoLocation location : locations)
+                location.setQueryPlaceName(placeName);
 
         return locations;
     }
