@@ -268,9 +268,8 @@ public class GeoLocation {
             throw new IOException("Error parsing geocoding response", e);
         }
 
-        if (locations != null)
-            for (GeoLocation location : locations)
-                location.setQueryPlaceName(placeName);
+        for (GeoLocation location : locations)
+            location.setQueryPlaceName(placeName);
 
         return locations;
     }
@@ -287,7 +286,7 @@ public class GeoLocation {
             throw new GeocodingException(String.format("Unsupported response version: Expected version 1.x - received %s. " +
             		"The code needs to be updated to parse these responses correctly.", version));
 
-        GeoLocation[] locations = null;
+        GeoLocation[] locations = new GeoLocation[0];
 
         int found = joResultSet.getInt("Found");
         if (found > 0) {
