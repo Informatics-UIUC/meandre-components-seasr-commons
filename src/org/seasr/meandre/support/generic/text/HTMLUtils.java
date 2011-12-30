@@ -60,16 +60,28 @@ import org.w3c.dom.Document;
 public abstract class HTMLUtils {
 
     /**
-     * Extracts text from an HTML document
+     * Extracts text from an HTML document using UTF-8 encoding
      *
      * @param html The HTML document
      * @return The text extracted from the HTML document
      * @throws ParserException Thrown if a problem occurs while parsing the HTML document
      */
     public static String extractText(String html) throws ParserException {
+        return extractText(html, "UTF-8");
+    }
+
+    /**
+     * Extracts text from an HTML document
+     *
+     * @param html The HTML document
+     * @param encoding The encoding
+     * @return The text extracted from the HTML document
+     * @throws ParserException Thrown if a problem occurs while parsing the HTML document
+     */
+    public static String extractText(String html, String encoding) throws ParserException {
         StringBean textScraper = new StringBean();
         Parser parser = new Parser();
-        parser.setEncoding("UTF-8");
+        parser.setEncoding(encoding);
         parser.setInputHTML(html);
         parser.visitAllNodesWith(textScraper);
 
@@ -77,7 +89,7 @@ public abstract class HTMLUtils {
     }
 
     /**
-     * Extracts text from a DOM Document
+     * Extracts text from a DOM Document using UTF-8 encoding
      *
      * @param document The document
      * @return The extracted text
@@ -85,11 +97,25 @@ public abstract class HTMLUtils {
      * @throws TransformerException
      * @throws UnsupportedEncodingException
      */
-    public static String extractText(Document document)
+    public static String extractText(Document document) throws ParserException, TransformerException, UnsupportedEncodingException {
+        return extractText(document, "UTF-8");
+    }
+
+    /**
+     * Extracts text from a DOM Document
+     *
+     * @param document The document
+     * @param encoding The encoding
+     * @return The extracted text
+     * @throws ParserException
+     * @throws TransformerException
+     * @throws UnsupportedEncodingException
+     */
+    public static String extractText(Document document, String encoding)
         throws ParserException, TransformerException, UnsupportedEncodingException {
 
         Properties outputProperties = new Properties();
-        outputProperties.setProperty(OutputKeys.ENCODING, "UTF-8");
+        outputProperties.setProperty(OutputKeys.ENCODING, encoding);
 
         return extractText(DOMUtils.getString(document, outputProperties));
     }

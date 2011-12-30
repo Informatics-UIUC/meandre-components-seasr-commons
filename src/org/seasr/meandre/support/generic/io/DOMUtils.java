@@ -46,6 +46,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
@@ -68,6 +69,7 @@ import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 
 import org.w3c.dom.Document;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 /**
@@ -117,7 +119,7 @@ public abstract class DOMUtils {
     }
 
     /**
-     * Creates a DOM Document from a string representation of an XML document
+     * Creates a DOM Document from a string representation of an XML document using UTF-8 encoding
      *
      * @param xml The XML string
      * @return The DOM Document
@@ -128,11 +130,27 @@ public abstract class DOMUtils {
     public static Document createDocument(String xml)
         throws SAXException, IOException, ParserConfigurationException {
 
-        return createDocument(new ByteArrayInputStream(xml.getBytes("UTF-8")));
+        return createDocument(xml, "UTF-8");
     }
 
     /**
-     * Creates a DOM Document from an InputStream
+     * Creates a DOM Document from a string representation of an XML document
+     *
+     * @param xml The XML string
+     * @param encoding The encoding
+     * @return The DOM Document
+     * @throws SAXException
+     * @throws IOException
+     * @throws ParserConfigurationException
+     */
+    public static Document createDocument(String xml, String encoding)
+        throws SAXException, IOException, ParserConfigurationException {
+
+        return createDocument(new ByteArrayInputStream(xml.getBytes(encoding)), encoding);
+    }
+
+    /**
+     * Creates a DOM Document from an InputStream using UTF-8 encoding
      *
      * @param inputStream The InputStream
      * @return The DOM Document
@@ -140,10 +158,30 @@ public abstract class DOMUtils {
      * @throws IOException
      * @throws ParserConfigurationException
      */
-    public static Document createDocument(InputStream inputStream)
+    public static Document createDocument(InputStream inputStream) throws SAXException, IOException, ParserConfigurationException {
+        return createDocument(inputStream, "UTF-8");
+    }
+
+    /**
+     * Creates a DOM Document from an InputStream
+     *
+     * @param inputStream The InputStream
+     * @param encoding The encoding
+     * @return The DOM Document
+     * @throws SAXException
+     * @throws IOException
+     * @throws ParserConfigurationException
+     */
+    public static Document createDocument(InputStream inputStream, String encoding)
         throws SAXException, IOException, ParserConfigurationException {
 
-        return DOC_FACT.newDocumentBuilder().parse(inputStream);
+        InputStreamReader reader = new InputStreamReader(inputStream, encoding);
+        try {
+            return DOC_FACT.newDocumentBuilder().parse(new InputSource(reader));
+        }
+        finally {
+            reader.close();
+        }
     }
 
     /**
