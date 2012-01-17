@@ -50,6 +50,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.nio.charset.Charset;
 import java.util.Properties;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -175,7 +176,7 @@ public abstract class DOMUtils {
     public static Document createDocument(InputStream inputStream, String encoding)
         throws SAXException, IOException, ParserConfigurationException {
 
-        InputStreamReader reader = new InputStreamReader(inputStream, encoding);
+        InputStreamReader reader = new InputStreamReader(inputStream, Charset.forName(encoding));
         try {
             return DOC_FACT.newDocumentBuilder().parse(new InputSource(reader));
         }
