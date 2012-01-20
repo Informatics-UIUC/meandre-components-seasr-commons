@@ -46,7 +46,7 @@ import java.util.logging.LogRecord;
 
 /**
  * A generic log formatter that includes useful information
- * 
+ *
  * @author Boris Capitanu
  */
 public class GenericLogFormatter extends Formatter {
@@ -57,12 +57,15 @@ public class GenericLogFormatter extends Formatter {
         if (msg == null || msg.length() == 0)
             msg = null;
 
+        String extra = "";
         Throwable thrown = record.getThrown();
         if (thrown != null) {
             if (msg == null)
                 msg = thrown.toString();
             else
                 msg += "  (" + thrown.toString() + ")";
+
+            extra = ExceptionFormatter.formatException(thrown) + System.getProperty("line.separator");
         }
 
         String srcClassName = record.getSourceClassName();
@@ -70,8 +73,8 @@ public class GenericLogFormatter extends Formatter {
 
         srcClassName = srcClassName.substring(srcClassName.lastIndexOf(".") + 1);
 
-        return String.format("%5$tm/%5$td/%5$ty %5$tH:%5$tM:%5$tS [%s]: %s\t[%s.%s]%n",
-                record.getLevel(), msg, srcClassName, srcMethodName, new Date(record.getMillis()));
+        return String.format("%6$tm/%6$td/%6$ty %6$tH:%6$tM:%6$tS [%s]: %s\t[%s.%s]%n%s",
+                record.getLevel(), msg, srcClassName, srcMethodName, extra, new Date(record.getMillis()));
     }
 
 }
