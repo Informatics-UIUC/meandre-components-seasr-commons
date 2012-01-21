@@ -42,78 +42,124 @@
 
 package org.seasr.meandre.support.generic.io;
 
-import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-
-import org.seasr.meandre.support.generic.util.Tuples.Tuple2;
 
 import com.google.protobuf.AbstractMessageLite;
 
 
 public abstract class Serializer {
 
+    public static final String SIGNATURE = "MPF";   // Meandre Persistence File
+    public static final int VERSION = 1;
+
     public static enum SerializationFormat {
         protobuf, java
     }
 
-    public static Tuple2<byte[], SerializationFormat> serializeObject(Object obj) throws IOException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        SerializationFormat serializer = null;
+    public static void serializeObject(Object obj, OutputStream outputStream) throws IOException {
+        DataOutputStream dataStream = new DataOutputStream(outputStream);
+        try {
+            dataStream.writeBytes(SIGNATURE);
+            dataStream.writeShort(VERSION);
+            dataStream.writeUTF(obj.getClass().getName());
 
-        if (obj instanceof AbstractMessageLite) {
-            // Google Protocol Buffers serialization
-            ((AbstractMessageLite) obj).writeTo(baos);
-            serializer = SerializationFormat.protobuf;
+            if (obj instanceof AbstractMessageLite) {
+                dataStream.writeUTF(SerializationFormat.protobuf.name());
+                ((AbstractMessageLite) obj).writeTo(dataStream);
+            }
+
+            else
+
+            if (obj instanceof Serializable) {
+                dataStream.writeUTF(SerializationFormat.java.name());
+                ObjectOutputStream out = new ObjectOutputStream(dataStream);
+                out.writeObject(obj);
+                out.close();
+            }
         }
-
-        else
-
-        if (obj instanceof Serializable) {
-            // Regular Java serialization
-            ObjectOutputStream out = new ObjectOutputStream(baos);
-            out.writeObject(obj);
-            out.close();
-            serializer = SerializationFormat.java;
+        finally {
+            dataStream.close();
         }
-
-        return baos.size() > 0 ? new Tuple2<byte[], SerializationFormat>(baos.toByteArray(), serializer) : null;
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> T deserializeObject(InputStream objStream, Class<T> clazz, SerializationFormat format)
-        throws IOException, IllegalArgumentException, IllegalAccessException, ClassNotFoundException {
-
+    public static <T> T deserializeObject(InputStream inputStream) throws IOException, SerializationException {
+        DataInputStream dataStream = new DataInputStream(inputStream);
         T obj = null;
 
-        switch (format) {
-            case protobuf:
-                try {
-                    Method parseFromMethod = clazz.getMethod("parseFrom", InputStream.class);
-                    obj = (T) parseFromMethod.invoke(null, objStream);
-                }
-                catch (NoSuchMethodException e) {
-                    throw new IllegalArgumentException("Cannot unserialize object via Google Protocol Buffers: incompatible parameter 'clazz'", e);
-                }
-                catch (InvocationTargetException e) {
-                    throw new IOException(e.getTargetException());
-                }
-                break;
+        try {
+            // check signature
+            byte[] signature = new byte[3];
+            dataStream.read(signature);
+            if (! new String(signature).equals(SIGNATURE))
+                throw new SerializationException("Incorrect file header.");
 
-            case java:
-                ObjectInputStream ois = new ObjectInputStream(objStream);
-                obj = (T) ois.readObject();
-                break;
+            int version = dataStream.readShort();
+            if (version > VERSION)
+                throw new SerializationException("Incompatible version numbers (persisted file was created with newer serializer)");
 
-            default:
-                throw new IllegalArgumentException(String.format("Unsupported serialization format: %s", format));
+            String className = dataStream.readUTF();
+            String format = dataStream.readUTF();
+
+            switch (SerializationFormat.valueOf(format)) {
+                case protobuf:
+                    try {
+                        Method parseFromMethod = Class.forName(className).getMethod("parseFrom", InputStream.class);
+                        obj = (T) parseFromMethod.invoke(null, dataStream);
+                    }
+                    catch (NoSuchMethodException e) {
+                        throw new IllegalArgumentException("Cannot unserialize object via Google Protocol Buffers: incompatible parameter 'clazz'", e);
+                    }
+                    catch (InvocationTargetException e) {
+                        throw new IOException(e.getTargetException());
+                    }
+                    catch (IllegalArgumentException e) {
+                        throw new SerializationException(e);
+                    }
+                    catch (IllegalAccessException e) {
+                        throw new SerializationException(e);
+                    }
+                    catch (SecurityException e) {
+                        throw new SerializationException(e);
+                    }
+                    break;
+
+                case java:
+                    ObjectInputStream ois = new ObjectInputStream(dataStream);
+                    obj = (T) ois.readObject();
+                    break;
+
+                default:
+                    throw new IllegalArgumentException(String.format("Unsupported serialization format: %s", format));
+            }
+        }
+        catch (ClassNotFoundException e) {
+            throw new SerializationException(e);
+        }
+        finally {
+            dataStream.close();
         }
 
         return obj;
+    }
+
+    @SuppressWarnings("serial")
+    public static class SerializationException extends Exception {
+        public SerializationException(String message) {
+            super(message);
+        }
+
+        public SerializationException(Throwable t) {
+            super(t);
+        }
     }
 }
