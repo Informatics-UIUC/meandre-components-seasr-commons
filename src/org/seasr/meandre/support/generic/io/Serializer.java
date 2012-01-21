@@ -91,10 +91,9 @@ public abstract class Serializer {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    public static <T> T deserializeObject(InputStream inputStream) throws IOException, SerializationException {
+    public static Object deserializeObject(InputStream inputStream) throws IOException, SerializationException {
         DataInputStream dataStream = new DataInputStream(inputStream);
-        T obj = null;
+        Object obj = null;
 
         try {
             // check signature
@@ -114,7 +113,7 @@ public abstract class Serializer {
                 case protobuf:
                     try {
                         Method parseFromMethod = Class.forName(className).getMethod("parseFrom", InputStream.class);
-                        obj = (T) parseFromMethod.invoke(null, dataStream);
+                        obj = parseFromMethod.invoke(null, dataStream);
                     }
                     catch (NoSuchMethodException e) {
                         throw new IllegalArgumentException("Cannot unserialize object via Google Protocol Buffers: incompatible parameter 'clazz'", e);
@@ -135,7 +134,7 @@ public abstract class Serializer {
 
                 case java:
                     ObjectInputStream ois = new ObjectInputStream(dataStream);
-                    obj = (T) ois.readObject();
+                    obj = ois.readObject();
                     break;
 
                 default:
