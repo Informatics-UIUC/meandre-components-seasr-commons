@@ -52,6 +52,8 @@ import java.io.OutputStream;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 import com.google.protobuf.AbstractMessageLite;
 
@@ -65,25 +67,30 @@ public abstract class Serializer {
         protobuf, java
     }
 
-    public static void serializeObject(Object obj, OutputStream outputStream) throws IOException {
+    public static void serializeObject(Object obj, OutputStream outputStream, boolean useCompression) throws IOException {
         DataOutputStream dataStream = new DataOutputStream(outputStream);
         try {
             dataStream.writeBytes(SIGNATURE);
             dataStream.writeShort(VERSION);
             dataStream.writeUTF(obj.getClass().getName());
+            dataStream.writeBoolean(useCompression);
 
             if (obj instanceof AbstractMessageLite) {
                 dataStream.writeUTF(SerializationFormat.protobuf.name());
-                ((AbstractMessageLite) obj).writeTo(dataStream);
+                OutputStream objStream = useCompression ? new ZipOutputStream(dataStream) : dataStream;
+                ((AbstractMessageLite) obj).writeTo(objStream);
+                objStream.close();
             }
 
             else
 
             if (obj instanceof Serializable) {
                 dataStream.writeUTF(SerializationFormat.java.name());
-                ObjectOutputStream out = new ObjectOutputStream(dataStream);
+                OutputStream objStream = useCompression ? new ZipOutputStream(dataStream) : dataStream;
+                ObjectOutputStream out = new ObjectOutputStream(objStream);
                 out.writeObject(obj);
                 out.close();
+                objStream.close();
             }
         }
         finally {
@@ -107,13 +114,15 @@ public abstract class Serializer {
                 throw new SerializationException("Incompatible version numbers (persisted file was created with newer serializer)");
 
             String className = dataStream.readUTF();
+            boolean useCompression = dataStream.readBoolean();
             String format = dataStream.readUTF();
 
             switch (SerializationFormat.valueOf(format)) {
                 case protobuf:
                     try {
                         Method parseFromMethod = Class.forName(className).getMethod("parseFrom", InputStream.class);
-                        obj = parseFromMethod.invoke(null, dataStream);
+                        InputStream objStream = useCompression ? new ZipInputStream(dataStream) : dataStream;
+                        obj = parseFromMethod.invoke(null, objStream);
                     }
                     catch (NoSuchMethodException e) {
                         throw new IllegalArgumentException("Cannot unserialize object via Google Protocol Buffers: incompatible parameter 'clazz'", e);
@@ -133,7 +142,8 @@ public abstract class Serializer {
                     break;
 
                 case java:
-                    ObjectInputStream ois = new ObjectInputStream(dataStream);
+                    InputStream objStream = useCompression ? new ZipInputStream(dataStream) : dataStream;
+                    ObjectInputStream ois = new ObjectInputStream(objStream);
                     obj = ois.readObject();
                     break;
 
