@@ -52,8 +52,8 @@ import java.io.OutputStream;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import com.google.protobuf.AbstractMessageLite;
 
@@ -77,20 +77,29 @@ public abstract class Serializer {
 
             if (obj instanceof AbstractMessageLite) {
                 dataStream.writeUTF(SerializationFormat.protobuf.name());
-                OutputStream objStream = useCompression ? new ZipOutputStream(dataStream) : dataStream;
-                ((AbstractMessageLite) obj).writeTo(objStream);
-                objStream.close();
+                if (useCompression) {
+                    GZIPOutputStream zipStream = new GZIPOutputStream(dataStream);
+                    ((AbstractMessageLite) obj).writeTo(zipStream);
+                    zipStream.finish();
+                } else
+                    ((AbstractMessageLite) obj).writeTo(dataStream);
             }
 
             else
 
             if (obj instanceof Serializable) {
                 dataStream.writeUTF(SerializationFormat.java.name());
-                OutputStream objStream = useCompression ? new ZipOutputStream(dataStream) : dataStream;
-                ObjectOutputStream out = new ObjectOutputStream(objStream);
-                out.writeObject(obj);
-                out.close();
-                objStream.close();
+                if (useCompression) {
+                    GZIPOutputStream zipStream = new GZIPOutputStream(dataStream);
+                    ObjectOutputStream out = new ObjectOutputStream(zipStream);
+                    out.writeObject(obj);
+                    out.close();
+                    zipStream.finish();
+                } else {
+                    ObjectOutputStream out = new ObjectOutputStream(dataStream);
+                    out.writeObject(obj);
+                    out.close();
+                }
             }
         }
         finally {
@@ -121,7 +130,7 @@ public abstract class Serializer {
                 case protobuf:
                     try {
                         Method parseFromMethod = Class.forName(className).getMethod("parseFrom", InputStream.class);
-                        InputStream objStream = useCompression ? new ZipInputStream(dataStream) : dataStream;
+                        InputStream objStream = useCompression ? new GZIPInputStream(dataStream) : dataStream;
                         obj = parseFromMethod.invoke(null, objStream);
                     }
                     catch (NoSuchMethodException e) {
@@ -142,7 +151,7 @@ public abstract class Serializer {
                     break;
 
                 case java:
-                    InputStream objStream = useCompression ? new ZipInputStream(dataStream) : dataStream;
+                    InputStream objStream = useCompression ? new GZIPInputStream(dataStream) : dataStream;
                     ObjectInputStream ois = new ObjectInputStream(objStream);
                     obj = ois.readObject();
                     break;
