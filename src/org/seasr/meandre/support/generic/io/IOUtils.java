@@ -50,6 +50,7 @@ import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.net.URI;
+import java.nio.charset.Charset;
 
 /**
  * @author Boris Capitanu
@@ -77,7 +78,7 @@ public abstract class IOUtils {
      * @throws IOException Thrown if a timeout occurred or if a problem occurred when creating the reader
      */
     public static Reader getReaderForResource(URI uri, int connectTimeout, int readTimeout) throws IOException {
-        return new InputStreamReader(StreamUtils.getInputStreamForResource(uri, connectTimeout, readTimeout));
+        return new InputStreamReader(StreamUtils.getInputStreamForResource(uri, connectTimeout, readTimeout), Charset.forName("UTF-8"));
     }
 
     /**
@@ -89,7 +90,7 @@ public abstract class IOUtils {
      * @throws IOException Thrown if a problem occurred when creating the writer
      */
     public static Writer getWriterForResource(URI uri, boolean append) throws IOException {
-        return new OutputStreamWriter(StreamUtils.getOutputStreamForResource(uri, append));
+        return new OutputStreamWriter(StreamUtils.getOutputStreamForResource(uri, append), Charset.forName("UTF-8"));
     }
 
     /**

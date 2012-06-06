@@ -45,6 +45,7 @@ package org.seasr.meandre.support.generic.text.handlers;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URLConnection;
+import java.nio.charset.Charset;
 
 import org.htmlparser.util.ParserException;
 import org.seasr.meandre.support.generic.io.IOUtils;
@@ -61,7 +62,7 @@ public class HTMLTextContentHandler extends XMLTextContentHandler {
         try {
             return HTMLUtils.extractText(
                     IOUtils.getTextFromReader(
-                            new InputStreamReader(connection.getInputStream())));
+                            new InputStreamReader(connection.getInputStream(), Charset.forName("UTF-8"))));
         }
         catch (ParserException e) {
             throw new IOException(e.toString());
