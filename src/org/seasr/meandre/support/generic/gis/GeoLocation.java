@@ -281,10 +281,10 @@ public class GeoLocation {
         String errMsg = joResultSet.getString("ErrorMessage");
         if (errCode != 0) throw new GeocodingException(errMsg);
 
-        String version = joResultSet.getString("version");
-        if (!version.startsWith("1."))
-            throw new GeocodingException(String.format("Unsupported response version: Expected version 1.x - received %s. " +
-            		"The code needs to be updated to parse these responses correctly.", version));
+        String version = joResultSet.getString("@version");
+        if (!version.startsWith("2."))
+            throw new GeocodingException(String.format("Unsupported response version: Expected version 2.x - received %s. " +
+                    "The code needs to be updated to parse these responses correctly.", version));
 
         GeoLocation[] locations = new GeoLocation[0];
 
