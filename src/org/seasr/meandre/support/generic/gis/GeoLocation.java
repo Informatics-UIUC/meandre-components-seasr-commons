@@ -55,9 +55,7 @@ import org.seasr.meandre.support.generic.io.HttpUtils;
 
 /**
  * Provides geocoding functionality based on the Yahoo geocoding service
- * http://developer.yahoo.com/geo/placefinder/guide/index.html
- *
- * SEASR API KEY: yFUeASDV34FRJWiaM8pxF0eJ7d2MizbUNVB2K6in0Ybwji5YB0D4ZODR2y3LqQ--
+ * http://developer.yahoo.com/boss/geo/
  *
  * @author Boris Capitanu
  */
@@ -65,11 +63,10 @@ public class GeoLocation {
     //
     // GeoLocation Service
     //
-    private static final String API_URL = "http://where.yahooapis.com/geocode";
-    private static String API_KEY;
+    private static final String API_URL = "http://query.yahooapis.com/v1/public/yql";
+    private static final String YQL_FORMAT = "select * from geo.placefinder where text=\"%s\"";
 
     private String _queryPlaceName;
-    private String _locale;
     private int _quality;
     private LatLngCoord _coord;
     private LatLngCoord _offsetCoord;
@@ -87,10 +84,6 @@ public class GeoLocation {
 
     public String getQueryPlaceName() {
         return _queryPlaceName;
-    }
-
-    public String getLocale() {
-        return _locale;
     }
 
     public int getQuality() {
@@ -171,10 +164,6 @@ public class GeoLocation {
         _queryPlaceName = queryPlaceName;
     }
 
-    private void setLocale(String locale) {
-        _locale = locale;
-    }
-
     private void setQuality(int quality) {
         _quality = quality;
     }
@@ -220,10 +209,6 @@ public class GeoLocation {
     private static ConcurrentMap<String, GeoLocation[]> _cache = new ConcurrentHashMap<String, GeoLocation[]>();
     private static ConcurrentMap<String, Object> _locks = new ConcurrentHashMap<String, Object>();
 
-    public static void setAPIKey(String key) {
-        API_KEY = key;
-    }
-
     public static GeoLocation[] geocode(String placeName) throws GeocodingException, IOException {
         return geocode(placeName, true);
     }
@@ -253,11 +238,7 @@ public class GeoLocation {
     }
 
     private static GeoLocation[] geocodeInternal(String placeName) throws GeocodingException, IOException {
-        if (API_KEY == null)
-            throw new IllegalArgumentException("Yahoo API key not set!  Use " + GeoLocation.class.getSimpleName() +
-                    ".setAPIKey(key) to set the API key before invoking any other methods.");
-
-        String request = String.format("%s?q=%s&flags=GJ&appid=%s", API_URL, URLEncoder.encode(placeName, "UTF-8"), API_KEY);
+        String request = String.format("%s?q=%s&format=json", API_URL, URLEncoder.encode(getYQLForPlacename(placeName), "UTF-8"));
         String response = HttpUtils.doGET(request, null);
 
         GeoLocation[] locations;
@@ -274,30 +255,36 @@ public class GeoLocation {
         return locations;
     }
 
+    private static String getYQLForPlacename(String placeName) {
+        return String.format(YQL_FORMAT, placeName);
+    }
+
     private static GeoLocation[] parseResponse(String response) throws GeocodingException, IOException, JSONException {
         JSONObject joResponse = new JSONObject(response);
-        JSONObject joResultSet = joResponse.getJSONObject("ResultSet");
-        int errCode = joResultSet.getInt("Error");
-        String errMsg = joResultSet.getString("ErrorMessage");
-        if (errCode != 0) throw new GeocodingException(errMsg);
+        if (joResponse.has("error")) {
+            JSONObject joError = joResponse.getJSONObject("error");
+            String message = joError.getString("description");
+            throw new GeocodingException(message);
+        }
 
-        String version = joResultSet.getString("@version");
-        if (!version.startsWith("2."))
-            throw new GeocodingException(String.format("Unsupported response version: Expected version 2.x - received %s. " +
-                    "The code needs to be updated to parse these responses correctly.", version));
+        JSONObject joQuery = joResponse.getJSONObject("query");
+        int count = joQuery.getInt("count");
+        GeoLocation[] locations = new GeoLocation[count];
 
-        GeoLocation[] locations = new GeoLocation[0];
+        if (count > 0) {
+            JSONObject joResults = joQuery.getJSONObject("results");
+            JSONArray jaResults;
+            if (count == 1) {
+                JSONObject joResult = joResults.getJSONObject("Result");
+                jaResults = new JSONArray();
+                jaResults.put(joResult);
+            } else
+                jaResults = joResults.getJSONArray("Result");
 
-        int found = joResultSet.getInt("Found");
-        if (found > 0) {
-            locations = new GeoLocation[found];
-            String locale = joResultSet.getString("Locale");
-            JSONArray jaResults = joResultSet.getJSONArray("Results");
             for (int i = 0, iMax = jaResults.length(); i < iMax; i++) {
                 JSONObject joLocation = jaResults.getJSONObject(i);
                 GeoLocation location = new GeoLocation();
                 location._isCreated = false;
-                location.setLocale(locale);
                 if (joLocation.has("quality"))
                     location.setQuality(joLocation.getInt("quality"));
                 if (joLocation.has("latitude") && joLocation.has("longitude"))
@@ -318,14 +305,14 @@ public class GeoLocation {
                         joLocation.has("unittype") ? joLocation.getString("unittype") : null,
                         joLocation.has("unit") ? joLocation.getString("unit") : null,
                         joLocation.has("postal") ? joLocation.getString("postal") : null,
-                        joLocation.has("level4") ? joLocation.getString("level4") : null,
-                        joLocation.has("level3") ? joLocation.getString("level3") : null,
-                        joLocation.has("level2") ? joLocation.getString("level2") : null,
-                        joLocation.has("level2code") ? joLocation.getString("level2code") : null,
-                        joLocation.has("level1") ? joLocation.getString("level1") : null,
-                        joLocation.has("level1code") ? joLocation.getString("level1code") : null,
-                        joLocation.has("level0") ? joLocation.getString("level0") : null,
-                        joLocation.has("level0code") ? joLocation.getString("level0code") : null,
+                        joLocation.has("neighborhood") ? joLocation.getString("neighborhood") : null,
+                        joLocation.has("city") ? joLocation.getString("city") : null,
+                        joLocation.has("county") ? joLocation.getString("county") : null,
+                        joLocation.has("countycode") ? joLocation.getString("countycode") : null,
+                        joLocation.has("state") ? joLocation.getString("state") : null,
+                        joLocation.has("statecode") ? joLocation.getString("statecode") : null,
+                        joLocation.has("country") ? joLocation.getString("country") : null,
+                        joLocation.has("countrycode") ? joLocation.getString("countrycode") : null,
                         joLocation.has("uzip") ? joLocation.getString("uzip") : null);
                 location.setAddressDetails(addressDetails);
                 if (joLocation.has("hash"))
