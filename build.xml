@@ -66,7 +66,7 @@
         <pathelement location="${build.dir}"/>
         <path refid="lib.classpath"/>
     </path>
-    
+
     <path id="test.classpath">
         <pathelement location="${build.test.dir}"/>
         <path refid="build.classpath"/>
@@ -85,7 +85,7 @@
     </target>
 
     <target name="prepare" depends="init" description="-> performs necessary preparation tasks for the build">
-        <svn failonerror="false" javahl="false" svnkit="true">
+        <svn refid="svn.settings">
             <wcVersion path="${basedir}" prefix="svn.root."/>
         </svn>
 
@@ -94,7 +94,7 @@
         </condition>
 
         <property name="revision" value="${svn_revision}"/>
-    
+
         <copy file="${version.template}" toFile="${version.file}" overwrite="true">
             <filterset>
                 <filter token="VERSION" value="${version}"/>
@@ -160,7 +160,7 @@
 
             <fileset dir="${src.dir}" excludes="org/seasr/meandre/support/generic/io/webdav/**"/>
         </jar>
-        
+
         <jar destfile="${dist.dir}/webdavclient-${version}.jar" basedir="${build.dir}" includes="org/seasr/meandre/support/generic/io/webdav/**">
             <manifest>
                 <attribute name="Implementation-Title" value="WebdavClient"/>
@@ -172,7 +172,7 @@
 
             <fileset dir="${src.dir}" includes="org/seasr/meandre/support/generic/io/webdav/**"/>
         </jar>
-        
+
         <jar destfile="${dist.dir}/webdavclient-deps-${version}.jar" basedir="${build.dir}" includes="org/seasr/meandre/support/generic/io/webdav/**">
             <manifest>
                 <attribute name="Implementation-Title" value="WebdavClient"/>
@@ -183,7 +183,7 @@
             </manifest>
 
             <fileset dir="${src.dir}" includes="org/seasr/meandre/support/generic/io/webdav/**"/>
-            
+
             <zipgroupfileset dir="${lib.dir}">
                 <include name="httpclient*.jar"/>
                 <include name="httpcore*.jar"/>
