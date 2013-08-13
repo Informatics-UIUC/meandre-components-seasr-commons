@@ -1,5 +1,6 @@
 package org.seasr.meandre.support.generic.io.webdav;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -9,20 +10,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpVersion;
 import org.apache.http.StatusLine;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
+import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.conn.ClientConnectionManager;
-import org.apache.http.conn.params.ConnManagerParams;
-import org.apache.http.conn.params.ConnPerRouteBean;
 import org.apache.http.conn.routing.HttpRoutePlanner;
 import org.apache.http.conn.scheme.PlainSocketFactory;
 import org.apache.http.conn.scheme.Scheme;
@@ -30,10 +30,10 @@ import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.FileEntity;
-import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
+import org.apache.http.impl.conn.PoolingClientConnectionManager;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.params.HttpProtocolParams;
@@ -54,8 +54,8 @@ public class WebdavClientImpl implements WebdavClient {
     private final Factory factory;
     private final DefaultHttpClient client;
     private final HttpHost host;
-    
-    
+
+
     public WebdavClientImpl(Factory factory) throws WebdavClientException {
         this(factory, null, null, null, null);
     }
@@ -77,20 +77,20 @@ public class WebdavClientImpl implements WebdavClient {
         this.host = host;
 
         HttpParams params = new BasicHttpParams();
-        ConnPerRouteBean connPerRoute = new ConnPerRouteBean(20);
-        ConnManagerParams.setMaxConnectionsPerRoute(params, connPerRoute);
-        ConnManagerParams.setMaxTotalConnections(params, 100);
         HttpProtocolParams.setVersion(params, HttpVersion.HTTP_1_1);
         HttpProtocolParams.setUserAgent(params, "WebdavClient/" + Version.getFullVersion());
 
         SchemeRegistry schemeRegistry = new SchemeRegistry();
-        schemeRegistry.register(new Scheme("http", PlainSocketFactory.getSocketFactory(), 80)); 
+        schemeRegistry.register(new Scheme("http", 80, PlainSocketFactory.getSocketFactory()));
         if (sslSocketFactory != null)
-            schemeRegistry.register(new Scheme("https", sslSocketFactory, 443));
+            schemeRegistry.register(new Scheme("https", 443, sslSocketFactory));
         else
-            schemeRegistry.register(new Scheme("https", SSLSocketFactory.getSocketFactory(), 443));
+            schemeRegistry.register(new Scheme("https", 443, SSLSocketFactory.getSocketFactory()));
 
-        ClientConnectionManager cm = new ThreadSafeClientConnManager(params, schemeRegistry);
+        PoolingClientConnectionManager cm = new PoolingClientConnectionManager(schemeRegistry);
+        cm.setDefaultMaxPerRoute(20);
+        cm.setMaxTotal(200);
+
         this.client = new DefaultHttpClient(cm, params);
 
         // for proxy configurations
@@ -98,7 +98,9 @@ public class WebdavClientImpl implements WebdavClient {
 
         if (creds != null) {
             AuthScope authScope = (host != null) ? new AuthScope(host.getHostName(), host.getPort()) : new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT);
-            this.client.getCredentialsProvider().setCredentials(authScope, creds);
+            CredentialsProvider provider = new BasicCredentialsProvider();
+            provider.setCredentials(authScope, creds);
+            this.client.setCredentialsProvider(provider);
         }
     }
 
@@ -109,15 +111,15 @@ public class WebdavClientImpl implements WebdavClient {
         HttpPropFind propFind = new HttpPropFind(url);
         propFind.setEntity(WebdavUtil.getResourcesEntity());
         propFind.setDepth(0);
-        
+
         HttpResponse response = executeRequest(propFind);
- 
+
         Multistatus multistatus = WebdavUtil.getMulitstatus(this.factory.getUnmarshaller(), response, url);
         List<Response> responses = multistatus.getResponse();
 
         if (responses.size() != 1)
             throw new WebdavClientException("Unexpected response length: " + responses.size(), url);
-        
+
         return new DavResource(host, responses.get(0));
     }
 
@@ -126,25 +128,25 @@ public class WebdavClientImpl implements WebdavClient {
      */
     public List<DavResource> listContents(String url) throws WebdavClientException {
         if (!url.endsWith("/")) url += "/";
-        
+
         HttpPropFind propFind = new HttpPropFind(url);
         propFind.setEntity(WebdavUtil.getResourcesEntity());
 
         HttpResponse response = executeRequest(propFind);
-      
+
         Multistatus multistatus = WebdavUtil.getMulitstatus(this.factory.getUnmarshaller(), response, url);
         List<Response> responses = multistatus.getResponse();
 
         List<DavResource> resources = new ArrayList<DavResource>(responses.size() - 1);
-        
-        for (Response resp : responses) {        
+
+        for (Response resp : responses) {
             if (url.startsWith(resp.getHref().get(0))) continue;
             resources.add(new DavResource(host, resp));
         }
- 
+
         return resources;
     }
-    
+
     /* (non-Javadoc)
      * @see org.seasr.meandre.support.generic.io.webdav.WebdavClient#listContents(java.lang.String, boolean)
      */
@@ -156,7 +158,7 @@ public class WebdavClientImpl implements WebdavClient {
             }
         });
     }
- 
+
     /* (non-Javadoc)
      * @see org.seasr.meandre.support.generic.io.webdav.WebdavClient#listContents(java.lang.String, boolean, java.io.FilenameFilter)
      */
@@ -166,17 +168,17 @@ public class WebdavClientImpl implements WebdavClient {
 
         List<DavResource> resources = new Vector<DavResource>();
         listResourcesInternal(url, recurse, filter, resources);
-        
+
         return resources;
     }
-    
+
     /* (non-Javadoc)
      * @see org.seasr.meandre.support.generic.io.webdav.WebdavClient#listFiles(java.lang.String)
      */
     public List<DavResource> listFiles(String url) throws WebdavClientException {
         return listFiles(url, false);
     }
-    
+
     /* (non-Javadoc)
      * @see org.seasr.meandre.support.generic.io.webdav.WebdavClient#listFiles(java.lang.String, boolean)
      */
@@ -198,7 +200,10 @@ public class WebdavClientImpl implements WebdavClient {
         HttpResponse response = executeRequest(get);
 
         try {
-            return response.getEntity().getContent();
+            HttpEntity entity = response.getEntity();
+            InputStream content = entity.getContent();
+
+            return content;
         }
         catch (IOException ex) {
             get.abort();
@@ -215,7 +220,8 @@ public class WebdavClientImpl implements WebdavClient {
         HttpResponse response = executeRequest(get);
 
         try {
-            return EntityUtils.toString(response.getEntity());
+            HttpEntity entity = response.getEntity();
+            return EntityUtils.toString(entity);
         }
         catch (Exception e) {
             throw new WebdavClientException(e);
@@ -231,7 +237,8 @@ public class WebdavClientImpl implements WebdavClient {
         HttpResponse response = executeRequest(get);
 
         try {
-            return EntityUtils.toByteArray(response.getEntity());
+            HttpEntity entity = response.getEntity();
+            return EntityUtils.toByteArray(entity);
         }
         catch (Exception e) {
             throw new WebdavClientException(e);
@@ -253,7 +260,20 @@ public class WebdavClientImpl implements WebdavClient {
      */
     public void put(String url, InputStream dataStream) throws WebdavClientException {
         HttpPut put = new HttpPut(url);
-        put.setEntity(new InputStreamEntity(dataStream, -1));
+
+        byte[] buffer = new byte[8192];
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try {
+            int n;
+            while((n = dataStream.read(buffer)) != -1)
+                baos.write(buffer, 0, n);
+        }
+        catch (IOException e) {
+            throw new WebdavClientException(e);
+        }
+
+        ByteArrayEntity bae = new ByteArrayEntity(baos.toByteArray());
+        put.setEntity(bae);
 
         executeRequest(put);
     }
@@ -357,17 +377,17 @@ public class WebdavClientImpl implements WebdavClient {
 
         if (!WebdavUtil.isGoodResponse(statusLine.getStatusCode())) {
             request.abort();
-            throw new WebdavClientException(request.getMethod() + ": " + request.getURI().toString(),  
+            throw new WebdavClientException(request.getMethod() + ": " + request.getURI().toString(),
                     request.getURI().toString(), statusLine.getStatusCode(), statusLine.getReasonPhrase());
         }
 
         return response;
     }
-    
+
     private void listResourcesInternal(String uri, boolean recurse, FilenameFilter filter, List<DavResource> resources) throws WebdavClientException {
         for (DavResource res : listContents(uri)) {
             if (!res.isCollection()) {
-                if (filter.accept(new File(res.getParentPath()), res.getNameDecoded())) 
+                if (filter.accept(new File(res.getParentPath()), res.getNameDecoded()))
                     resources.add(res);
             } else {
                 if (filter.accept(new File(res.getPath()), null))
@@ -376,7 +396,7 @@ public class WebdavClientImpl implements WebdavClient {
             }
         }
     }
-    
+
     /* (non-Javadoc)
      * @see org.seasr.meandre.support.generic.io.webdav.WebdavClient#close()
      */

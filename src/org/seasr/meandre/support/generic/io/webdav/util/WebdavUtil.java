@@ -14,9 +14,12 @@ import java.util.TimeZone;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.util.EntityUtils;
 import org.seasr.meandre.support.generic.io.webdav.model.Multistatus;
 
 
@@ -58,7 +61,7 @@ public class WebdavUtil {
 
     /**
      * Hides the irritating declared exception.
-     * 
+     *
      * @return null if there is an IllegalArgumentException
      * @throws RuntimeException
      *             if there is an UnsupportedEncodingException
@@ -77,7 +80,7 @@ public class WebdavUtil {
 
     /**
      * Loops over all the possible date formats and tries to find the right one.
-     * 
+     *
      * @param dateValue
      */
     public static Date parseDate(String dateValue) {
@@ -106,7 +109,7 @@ public class WebdavUtil {
             super();
             this.setDepth(1);
             this.setURI(URI.create(url));
-            this.setHeader("Content-Type", "text/xml");
+            this.setHeader(HttpHeaders.CONTENT_TYPE, "text/xml");
         }
 
         @Override
@@ -193,6 +196,7 @@ public class WebdavUtil {
             try {
                 GET_RESOURCES = new StringEntity("<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n" + "<propfind xmlns=\"DAV:\">\n" + "	<allprop/>\n"
                         + "</propfind>", "UTF-8");
+                GET_RESOURCES.setContentType("text/xmlmc; charset=utf-8");
             }
             catch (UnsupportedEncodingException e) {
                 // Ignored
@@ -207,7 +211,11 @@ public class WebdavUtil {
      */
     public static Multistatus getMulitstatus(Unmarshaller unmarshaller, HttpResponse response, String url) throws WebdavClientException {
         try {
-            return (Multistatus) unmarshaller.unmarshal(response.getEntity().getContent());
+            HttpEntity entity = response.getEntity();
+            Multistatus multiStatus = (Multistatus) unmarshaller.unmarshal(entity.getContent());
+            EntityUtils.consumeQuietly(entity);
+
+            return multiStatus;
         }
         catch (JAXBException ex) {
             throw new WebdavClientException("Problem unmarshalling the data", url, ex);

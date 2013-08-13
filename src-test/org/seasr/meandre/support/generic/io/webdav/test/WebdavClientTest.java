@@ -30,19 +30,19 @@ import org.seasr.meandre.support.generic.io.webdav.util.WebdavClientException;
 
 /**
  * Test harness for WebdavClient
- * 
+ *
  * @author Boris Capitanu
  */
 public class WebdavClientTest {
 
     // the test server
-    final String server = "candy";   // put the correct server here
+    final String server = "";   // put the correct server here
 
     // for private (authenticated) access
-    final String username = "admin";  // put the correct user name here
-    final String password = "...admin";  // put the correct password here
+    final String username = "user";  	 // put the correct user name here
+    final String password = "password";  // put the correct password here
 
-    
+
     final String testFolder = "/webdav/_WebdavClientTest/";
 
     // for public access
@@ -55,6 +55,8 @@ public class WebdavClientTest {
 
     @Before
     public void setUp() throws Exception {
+        assertTrue ("Test server not specified!", server != null && !server.isEmpty());
+
         // create a test file
         tempFile = File.createTempFile("WebdavClientTest", ".txt");
         PrintWriter writer = new PrintWriter(tempFile);
@@ -65,7 +67,7 @@ public class WebdavClientTest {
 
         if (client.exists(testFolder)) client.delete(testFolder);
 
-        if (!client.mkdir(testFolder)) throw new RuntimeException("Cannot create test folder");
+        if (!client.mkdirs(testFolder)) throw new RuntimeException("Cannot create test folder");
     }
 
     @Test
@@ -194,11 +196,10 @@ public class WebdavClientTest {
             assertTrue(client.exists(testFolder + "testPutInputStream2.txt"));
 
             try {
-                client.put(testFolder + "/nonExistentFolder/fileInputStream.txt", new FileInputStream(tempFile));
+                client.put(testFolder + "nonExistentFolder/fileInputStream.txt", new FileInputStream(tempFile));
                 fail("This call should fail");
             }
             catch (WebdavClientException e) {
-                if (e.getStatusCode() != HttpStatus.SC_NOT_FOUND) fail(e.getResponsePhrase());
             }
         }
         catch (IOException e) {
