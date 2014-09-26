@@ -293,12 +293,7 @@ public class WebdavClientImpl implements WebdavClient {
      */
     public void put(String url, String content, String charset) throws WebdavClientException {
         HttpPut put = new HttpPut(url);
-        try {
-            put.setEntity(new StringEntity(content, charset));
-        }
-        catch (UnsupportedEncodingException e) {
-            throw new WebdavClientException(e);
-        }
+        put.setEntity(new StringEntity(content, charset));
 
         executeRequest(put);
     }

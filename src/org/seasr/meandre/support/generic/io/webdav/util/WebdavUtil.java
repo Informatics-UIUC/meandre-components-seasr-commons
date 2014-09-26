@@ -193,14 +193,9 @@ public class WebdavUtil {
      */
     public static StringEntity getResourcesEntity() {
         if (GET_RESOURCES == null) {
-            try {
-                GET_RESOURCES = new StringEntity("<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n" + "<propfind xmlns=\"DAV:\">\n" + "	<allprop/>\n"
-                        + "</propfind>", "UTF-8");
-                GET_RESOURCES.setContentType("text/xmlmc; charset=utf-8");
-            }
-            catch (UnsupportedEncodingException e) {
-                // Ignored
-            }
+            GET_RESOURCES = new StringEntity("<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n" + "<propfind xmlns=\"DAV:\">\n" + "	<allprop/>\n"
+			        + "</propfind>", "UTF-8");
+			GET_RESOURCES.setContentType("text/xmlmc; charset=utf-8");
         }
 
         return GET_RESOURCES;
